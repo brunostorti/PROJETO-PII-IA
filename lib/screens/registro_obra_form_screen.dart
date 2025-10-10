@@ -7,6 +7,7 @@ import '../services/registro_obra_service.dart';
 import '../services/firebase_storage_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
+import 'package:geolocator/geolocator.dart';
 
 class RegistroObraFormScreen extends StatefulWidget {
   final File? imageFile; // mobile/desktop
@@ -38,6 +39,9 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
 
   bool _isLoading = false;
   DateTime _selectedDate = DateTime.now();
+  double? _latitude;
+  double? _longitude;
+  double? _accuracyMeters;
 
   @override
   void initState() {
@@ -68,6 +72,7 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
     ));
 
     _animationController.forward();
+    _initLocation();
   }
 
   @override
@@ -224,6 +229,8 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
         _buildSuggestionChips(),
         const SizedBox(height: 20),
         _buildDateField(),
+        const SizedBox(height: 20),
+        _buildLocationInfo(),
       ],
     );
   }
@@ -492,6 +499,9 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
         projectId: widget.projectId,
         createdByName: authProvider.userDisplayName,
         timestamp: _selectedDate,
+        latitude: _latitude,
+        longitude: _longitude,
+        locationAccuracyMeters: _accuracyMeters,
       );
 
       // 3. Salvar no Firestore
@@ -513,6 +523,57 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
         });
       }
     }
+  }
+
+  Future<void> _initLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        return; // usuário negou
+      }
+
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+      if (mounted) {
+        setState(() {
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+          _accuracyMeters = position.accuracy;
+        });
+      }
+    } catch (e) {
+      // Silencioso: localização é opcional
+    }
+  }
+
+  Widget _buildLocationInfo() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.my_location, color: AppTheme.primaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _latitude != null && _longitude != null
+                  ? 'Localização capturada: ${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)} (±${_accuracyMeters?.toStringAsFixed(1)} m)'
+                  : 'Capturando localização... (opcional)'
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSuccessSnackBar(String message) {

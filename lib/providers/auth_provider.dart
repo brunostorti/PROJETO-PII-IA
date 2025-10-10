@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isAdmin = false;
 
   User? get user => _user;
   bool get isLoading => _isLoading;
@@ -15,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   String? get userEmail => _user?.email;
   String? get userDisplayName => _user?.displayName;
   bool get isAnonymous => _user?.isAnonymous ?? false;
+  bool get isAdmin => _isAdmin;
 
   AuthProvider() {
     _init();
@@ -24,8 +27,24 @@ class AuthProvider extends ChangeNotifier {
     // Escutar mudanças no estado de autenticação
     AuthService.authStateChanges.listen((User? user) {
       _user = user;
-      notifyListeners();
+      if (user?.uid != null) {
+        _loadUserRole(user!.uid);
+      } else {
+        _isAdmin = false;
+        notifyListeners();
+      }
     });
+  }
+
+  Future<void> _loadUserRole(String userId) async {
+    try {
+      final role = await UserService.getUserRole(userId);
+      _isAdmin = role == 'admin';
+    } catch (_) {
+      _isAdmin = false;
+    } finally {
+      notifyListeners();
+    }
   }
 
   // Login anônimo

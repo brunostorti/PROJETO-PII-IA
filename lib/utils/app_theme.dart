@@ -113,12 +113,12 @@ class AppTheme {
         ),
       ),
 
-      // Floating Action Button moderno
+      // Floating Action Button moderno (extended em formato pill)
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: accentColor,
+        backgroundColor: primaryLight,
         foregroundColor: Colors.white,
-        elevation: 0,
-        shape: CircleBorder(),
+        elevation: 2,
+        shape: StadiumBorder(),
       ),
 
       // Cards com glassmorphism

@@ -74,20 +74,31 @@ class _RegistrosTimelineScreenState extends State<RegistrosTimelineScreen> {
           Expanded(
             child: userId == null
                 ? const Center(child: Text('Faça login para ver seus registros'))
-                : StreamBuilder<List<RegistroObra>>(
-                    stream: RegistroObraService.getRegistrosStreamFiltered(
-                      userId,
-                      start: _startDate,
-                      end: _endDate,
-                      ponto: _pontoController.text.trim().isEmpty ? null : _pontoController.text.trim(),
-                      projectId: widget.projectId,
-                    ),
-                    builder: (context, snapshot) {
+                : Consumer<AuthProvider>(
+                    builder: (context, auth, _) {
+                      final stream = (auth.isAdmin && widget.projectId != null)
+                          ? RegistroObraService.getProjectRegistrosStreamFiltered(
+                              widget.projectId!,
+                              start: _startDate,
+                              end: _endDate,
+                              ponto: _pontoController.text.trim().isEmpty ? null : _pontoController.text.trim(),
+                            )
+                          : RegistroObraService.getRegistrosStreamFiltered(
+                              userId,
+                              start: _startDate,
+                              end: _endDate,
+                              ponto: _pontoController.text.trim().isEmpty ? null : _pontoController.text.trim(),
+                              projectId: widget.projectId,
+                            );
+
+                      return StreamBuilder<List<RegistroObra>>(
+                        stream: stream,
+                        builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
                       if (snapshot.hasError) {
-                        return const Center(child: Text('Erro ao carregar registros'));
+                        return const Center(child: Text('Erro ao carregar registros. Verifique sua conexão e permissões.'));
                       }
                       final registros = snapshot.data ?? [];
                       if (registros.isEmpty) {
@@ -111,6 +122,8 @@ class _RegistrosTimelineScreenState extends State<RegistrosTimelineScreen> {
                           );
                         },
                       );
+                        },
+                      );
                     },
                   ),
           ),
@@ -118,11 +131,16 @@ class _RegistrosTimelineScreenState extends State<RegistrosTimelineScreen> {
       ),
       floatingActionButton: widget.projectId == null
           ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _showImageSourceDialog(context),
-              icon: const Icon(Icons.add_a_photo),
-              label: const Text('Novo Registro'),
-              backgroundColor: AppTheme.accentColor,
+          : Consumer<AuthProvider>(
+              builder: (context, auth, _) {
+                if (!auth.isLoggedIn) return const SizedBox.shrink();
+                return FloatingActionButton.extended(
+                  onPressed: () => _showImageSourceDialog(context),
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text('Novo Registro'),
+                  backgroundColor: AppTheme.primaryLight,
+                );
+              },
             ),
     );
   }

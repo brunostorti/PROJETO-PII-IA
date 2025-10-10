@@ -102,6 +102,9 @@ class RegistroObraService {
     String? projectId,
     String? createdByName,
     DateTime? timestamp,
+    double? latitude,
+    double? longitude,
+    double? locationAccuracyMeters,
   }) {
     final id = generateRegistroId();
     final now = DateTime.now();
@@ -114,6 +117,9 @@ class RegistroObraService {
       pontoObra: pontoObra,
       etapaObra: etapaObra,
       createdByName: createdByName,
+      latitude: latitude,
+      longitude: longitude,
+      locationAccuracyMeters: locationAccuracyMeters,
       timestamp: timestamp ?? now,
       createdAt: now,
       updatedAt: now,
@@ -149,14 +155,16 @@ class RegistroObraService {
     if (ponto != null && ponto.trim().isNotEmpty) {
       query = query.where('pontoObra', isEqualTo: ponto.trim());
     }
-    if (start != null) {
-      query = query.where('timestamp', isGreaterThanOrEqualTo: start);
+    // Só adiciona range + orderBy se houver filtro de data (evita índice composto)
+    if (start != null || end != null) {
+      query = query.orderBy('timestamp', descending: true);
+      if (start != null) {
+        query = query.where('timestamp', isGreaterThanOrEqualTo: start);
+      }
+      if (end != null) {
+        query = query.where('timestamp', isLessThanOrEqualTo: end);
+      }
     }
-    if (end != null) {
-      query = query.where('timestamp', isLessThanOrEqualTo: end);
-    }
-
-    query = query.orderBy('timestamp', descending: true);
     return query;
   }
 
@@ -176,9 +184,45 @@ class RegistroObraService {
       projectId: projectId,
     );
     return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final list = snapshot.docs.map((doc) {
         return RegistroObra.fromFirestore(doc.data(), doc.id);
       }).toList();
+      // Ordenar localmente por timestamp desc para o caso sem orderBy
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
+  }
+
+  // Stream (admin): registros de um projeto (com filtros opcionais)
+  static Stream<List<RegistroObra>> getProjectRegistrosStreamFiltered(
+    String projectId, {
+    DateTime? start,
+    DateTime? end,
+    String? ponto,
+  }) {
+    Query<Map<String, dynamic>> query = _firestore
+        .collection(_collectionName)
+        .where('projectId', isEqualTo: projectId);
+
+    if (ponto != null && ponto.trim().isNotEmpty) {
+      query = query.where('pontoObra', isEqualTo: ponto.trim());
+    }
+    if (start != null || end != null) {
+      query = query.orderBy('timestamp', descending: true);
+      if (start != null) {
+        query = query.where('timestamp', isGreaterThanOrEqualTo: start);
+      }
+      if (end != null) {
+        query = query.where('timestamp', isLessThanOrEqualTo: end);
+      }
+    }
+
+    return query.snapshots().map((snapshot) {
+      final list = snapshot.docs.map((doc) {
+        return RegistroObra.fromFirestore(doc.data(), doc.id);
+      }).toList();
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
     });
   }
 

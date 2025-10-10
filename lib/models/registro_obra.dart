@@ -8,6 +8,9 @@ class RegistroObra {
   final String pontoObra;
   final String etapaObra;
   final String? createdByName;
+  final double? latitude;
+  final double? longitude;
+  final double? locationAccuracyMeters;
   final DateTime timestamp;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -20,6 +23,9 @@ class RegistroObra {
     required this.pontoObra,
     required this.etapaObra,
     this.createdByName,
+    this.latitude,
+    this.longitude,
+    this.locationAccuracyMeters,
     required this.timestamp,
     required this.createdAt,
     required this.updatedAt,
@@ -33,6 +39,9 @@ class RegistroObra {
     String? pontoObra,
     String? etapaObra,
     String? createdByName,
+    double? latitude,
+    double? longitude,
+    double? locationAccuracyMeters,
     DateTime? timestamp,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -45,6 +54,9 @@ class RegistroObra {
       pontoObra: pontoObra ?? this.pontoObra,
       etapaObra: etapaObra ?? this.etapaObra,
       createdByName: createdByName ?? this.createdByName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationAccuracyMeters: locationAccuracyMeters ?? this.locationAccuracyMeters,
       timestamp: timestamp ?? this.timestamp,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -60,6 +72,9 @@ class RegistroObra {
       'pontoObra': pontoObra,
       'etapaObra': etapaObra,
       'createdByName': createdByName,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationAccuracyMeters': locationAccuracyMeters,
       'timestamp': timestamp.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -75,6 +90,9 @@ class RegistroObra {
       pontoObra: json['pontoObra'] as String,
       etapaObra: json['etapaObra'] as String,
       createdByName: json['createdByName'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      locationAccuracyMeters: (json['locationAccuracyMeters'] as num?)?.toDouble(),
       timestamp: DateTime.parse(json['timestamp'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -90,6 +108,9 @@ class RegistroObra {
       'pontoObra': pontoObra,
       'etapaObra': etapaObra,
       if (createdByName != null) 'createdByName': createdByName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (locationAccuracyMeters != null) 'locationAccuracyMeters': locationAccuracyMeters,
       'timestamp': timestamp,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -105,6 +126,9 @@ class RegistroObra {
       pontoObra: data['pontoObra'] as String,
       etapaObra: data['etapaObra'] as String,
       createdByName: data['createdByName'] as String?,
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
+      locationAccuracyMeters: (data['locationAccuracyMeters'] as num?)?.toDouble(),
       timestamp: (data['timestamp'] as Timestamp).toDate(),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -122,6 +146,6 @@ class RegistroObra {
 
   @override
   String toString() {
-    return 'RegistroObra(id: $id, pontoObra: $pontoObra, etapaObra: $etapaObra)';
+    return 'RegistroObra(id: $id, pontoObra: $pontoObra, etapaObra: $etapaObra, lat: $latitude, lng: $longitude)';
   }
 }

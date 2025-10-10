@@ -12,6 +12,7 @@ import '../providers/project_provider.dart';
 import '../providers/auth_provider.dart';
 import 'registro_obra_form_screen.dart';
 import 'registros_timeline_screen.dart';
+import 'project_form_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -40,6 +41,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text(AppConstants.dashboardTitle),
         actions: [
+          Consumer<AuthProvider>(
+            builder: (context, auth, _) {
+              if (!auth.isAdmin) return const SizedBox.shrink();
+              return IconButton(
+                tooltip: 'Nova Obra',
+                icon: const Icon(Icons.add_business_outlined),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ProjectFormScreen(),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -84,58 +101,114 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }
 
-              return Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      MediaQuery.of(context).size.width < 400 ? 12 : 16,
-                      MediaQuery.of(context).size.width < 400 ? 12 : 16,
-                      MediaQuery.of(context).size.width < 400 ? 12 : 16,
-                      0,
-                    ),
-                    child: _DashboardHeader(projectProvider: projectProvider),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 400 ? 12 : 16),
-                      itemCount: projectProvider.projects.length,
-                      itemBuilder: (context, index) {
-                        final project = projectProvider.projects[index];
-                        return ProjectCard(
-                          project: project,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => RegistrosTimelineScreen(
-                                  projectId: project.id,
-                                  projectName: project.name,
-                                ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final hPad = constraints.maxWidth < 420 ? 12.0 : 16.0;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
+                        child: _DashboardHeader(projectProvider: projectProvider),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: EdgeInsets.all(hPad),
+                          itemCount: projectProvider.projects.length,
+                          itemBuilder: (context, index) {
+                            final project = projectProvider.projects[index];
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: hPad),
+                              child: ProjectCard(
+                                project: project,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => RegistrosTimelineScreen(
+                                        projectId: project.id,
+                                        projectName: project.name,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             );
                           },
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showImageSourceDialog(context);
+      floatingActionButton: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          if (!auth.isLoggedIn) return const SizedBox.shrink();
+          return FloatingActionButton.extended(
+            onPressed: () {
+              _selectProjectAndCapture(context);
+            },
+            icon: const Icon(Icons.add_a_photo),
+            label: const Text('Registrar Obra'),
+            backgroundColor: AppTheme.primaryLight,
+          );
         },
-        icon: const Icon(Icons.add_a_photo),
-        label: const Text('Registrar Obra'),
-        backgroundColor: AppTheme.accentColor,
       ),
     );
   }
 
-  void _showImageSourceDialog(BuildContext context) {
+  
+
+  Future<void> _selectProjectAndCapture(BuildContext context) async {
+    final projectProvider = context.read<ProjectProvider>();
+    final projects = projectProvider.projects;
+    if (projects.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nenhuma obra cadastrada'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+      return;
+    }
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: projects.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final p = projects[index];
+              return ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: AppTheme.surfaceColor,
+                leading: const Icon(Icons.home_work_outlined, color: AppTheme.primaryColor),
+                title: Text(p.name),
+                subtitle: Text(p.location),
+                onTap: () => Navigator.of(context).pop(p.id),
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+
+    // Após escolher a obra, abrir escolha de fonte e encaminhar projectId
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -146,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                _captureImage(context, ImageSource.camera);
+                _captureImageForProject(context, ImageSource.camera, selected);
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -160,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                _captureImage(context, ImageSource.gallery);
+                _captureImageForProject(context, ImageSource.gallery, selected);
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -186,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _captureImage(BuildContext context, ImageSource source) async {
+  Future<void> _captureImageForProject(BuildContext context, ImageSource source, String projectId) async {
     try {
       if (kIsWeb) {
         final picker = ImagePicker();
@@ -199,32 +272,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         if (pickedFile != null && mounted) {
           final authProvider = context.read<AuthProvider>();
-
           if (authProvider.userId == null) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Usuário não autenticado'),
-                  backgroundColor: AppTheme.errorColor,
-                ),
-              );
-            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Usuário não autenticado'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
             return;
           }
 
           final bytes = await pickedFile.readAsBytes();
-
-          if (mounted) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => RegistroObraFormScreen(
-                  imageBytes: bytes,
-                  imageFileName: pickedFile.name,
-                  // sem obra específica ao partir do FAB do dashboard
-                ),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => RegistroObraFormScreen(
+                imageBytes: bytes,
+                imageFileName: pickedFile.name,
+                projectId: projectId,
               ),
-            );
-          }
+            ),
+          );
         }
         return;
       }
@@ -237,36 +304,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       if (imageFile != null && mounted) {
-        // Verificar se o usuário está autenticado
         final authProvider = context.read<AuthProvider>();
-        
         if (authProvider.userId == null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Usuário não autenticado'),
-                backgroundColor: AppTheme.errorColor,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Usuário não autenticado'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
           return;
         }
 
-        // Navegar para o formulário de registro
-        if (mounted) {
         Navigator.of(context).push(
-            MaterialPageRoute(
+          MaterialPageRoute(
             builder: (context) => RegistroObraFormScreen(
               imageFile: imageFile!,
-              // sem obra específica ao partir do FAB do dashboard
+              projectId: projectId,
             ),
-            ),
-          );
-        }
+          ),
+        );
       }
     } catch (e) {
-      print('Erro ao capturar imagem: $e');
-      // Não mostrar erro para o usuário, apenas log
+      // log silencioso
     }
   }
 }
@@ -278,24 +337,9 @@ class _DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      _StatInfo(
-        label: 'Ativas',
-        value: projectProvider.activeProjects.toString(),
-        color: AppTheme.primaryColor,
-        icon: Icons.work_outline,
-      ),
-      _StatInfo(
-        label: 'Concluídas',
-        value: projectProvider.completedProjects.toString(),
-        color: AppTheme.successColor,
-        icon: Icons.verified_outlined,
-      ),
-      _StatInfo(
-        label: 'Total',
-        value: projectProvider.totalProjects.toString(),
-        color: AppTheme.secondaryColor,
-        icon: Icons.all_inbox_outlined,
-      ),
+      _StatInfo(label: 'Ativas', value: projectProvider.activeProjects.toString(), color: AppTheme.primaryColor, icon: Icons.work_outline),
+      _StatInfo(label: 'Concluídas', value: projectProvider.completedProjects.toString(), color: AppTheme.successColor, icon: Icons.verified_outlined),
+      _StatInfo(label: 'Total', value: projectProvider.totalProjects.toString(), color: AppTheme.secondaryColor, icon: Icons.all_inbox_outlined),
     ];
 
     return Container(
@@ -304,13 +348,21 @@ class _DashboardHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppTheme.cardShadow,
       ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: stats
-            .map((s) => Expanded(
-                  child: _StatCard(info: s),
-                ))
-            .toList(),
+      padding: const EdgeInsets.all(12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTight = constraints.maxWidth < 360;
+          final children = stats.map((s) => Expanded(child: _StatCard(info: s))).toList();
+          return isTight
+              ? Column(
+                  children: [
+                    Row(children: [children[0], const SizedBox(width: 8), children[1]]),
+                    const SizedBox(height: 8),
+                    Row(children: [children[2]]),
+                  ],
+                )
+              : Row(children: children);
+        },
       ),
     );
   }

@@ -12,10 +12,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Regras para a coleção de projetos
     match /projects/{projectId} {
-      // Permitir leitura e escrita apenas se o usuário estiver autenticado
-      // e for o dono do projeto
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
+      // Leitura: dono pode ler
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Criação: apenas admins podem criar projetos (validados via users/{uid}.role)
+      allow create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+        request.resource.data.userId == request.auth.uid;
+      // Escrita/atualização: somente dono (admin já será o dono ao criar)
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
       
       // Permitir criação apenas se o usuário estiver autenticado
       // e o userId do documento for igual ao UID do usuário
@@ -25,15 +29,18 @@ service cloud.firestore {
     
     // Regras para a coleção de registros de obras
     match /registros_obras/{registroId} {
-      // Permitir leitura e escrita apenas se o usuário estiver autenticado
-      // e for o dono do registro
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      
-      // Permitir criação apenas se o usuário estiver autenticado
-      // e o userId do documento for igual ao UID do usuário
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      // Leitura: dono OU admin dono do projeto relacionado
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        (
+          resource.data.projectId != null &&
+          get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.userId == request.auth.uid
+        )
+      );
+      // Criação: qualquer usuário autenticado pode criar seu próprio registro
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Update/Delete: apenas dono
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
     // Regras para futuras coleções de usuários
@@ -41,6 +48,10 @@ service cloud.firestore {
       // Usuário só pode acessar seus próprios dados
       allow read, write: if request.auth != null 
         && request.auth.uid == userId;
+
+      // Campo de role esperado: 'admin' | 'user'
+      // Document example:
+      // users/{uid} => { role: 'admin' | 'user', displayName: '...' }
     }
   }
 }

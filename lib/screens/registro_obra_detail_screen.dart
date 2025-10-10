@@ -76,6 +76,19 @@ class RegistroObraDetailScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 16),
+                if (r.latitude != null && r.longitude != null) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.my_location, size: 18, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${r.latitude!.toStringAsFixed(6)}, ${r.longitude!.toStringAsFixed(6)}'
+                        '${r.locationAccuracyMeters != null ? ' (±${r.locationAccuracyMeters!.toStringAsFixed(1)} m)' : ''}',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Text(
                   'Criado em: ${dateFmt.format(r.createdAt)}',
                   style: Theme.of(context).textTheme.bodySmall,
