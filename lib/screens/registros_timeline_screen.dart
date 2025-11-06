@@ -11,6 +11,8 @@ import '../utils/app_theme.dart';
 import 'registro_obra_detail_screen.dart';
 import '../services/image_service.dart';
 import 'registro_obra_form_screen.dart';
+import '../widgets/safe_image.dart';
+import 'project_users_screen.dart';
 
 class RegistrosTimelineScreen extends StatefulWidget {
   final String? projectId; // opcional: filtra por obra
@@ -66,6 +68,30 @@ class _RegistrosTimelineScreenState extends State<RegistrosTimelineScreen> {
         title: Text(widget.projectName == null ? 'Linha do Tempo' : 'Obra: ${widget.projectName}'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          // Botão para gerenciar usuários (apenas admin e quando há projectId)
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              if (!authProvider.isAdmin || widget.projectId == null) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.people),
+                tooltip: 'Gerenciar usuários do projeto',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProjectUsersScreen(
+                        projectId: widget.projectId!,
+                        projectName: widget.projectName ?? 'Projeto',
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -318,74 +344,80 @@ class _RegistroItem extends StatelessWidget {
           boxShadow: AppTheme.cardShadow,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-              ),
-              child: Hero(
-                tag: registro.id,
-                child: Image.network(
-                  registro.imageUrl,
-                  width: 110,
-                  height: 110,
-                  fit: BoxFit.cover,
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded) return child;
-                    return AnimatedOpacity(
-                      opacity: frame == null ? 0 : 1,
-                      duration: const Duration(milliseconds: 300),
-                      child: child,
-                    );
-                  },
+            Hero(
+              tag: registro.id,
+              child: SafeImage(
+                imageUrl: registro.imageUrl,
+                width: 110,
+                height: 110,
+                fit: BoxFit.cover,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    registro.pontoObra,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    registro.etapaObra,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  if (registro.createdByName != null && registro.createdByName!.trim().isNotEmpty) ...[
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      registro.pontoObra,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      registro.etapaObra,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (registro.createdByName != null && registro.createdByName!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.person_outline, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              registro.createdByName!,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 16, color: Colors.grey),
+                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text(
-                          registro.createdByName!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                        Flexible(
+                          child: Text(
+                            dateFmt.format(registro.timestamp),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
                   ],
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        dateFmt.format(registro.timestamp),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
-            const SizedBox(width: 12),
           ],
         ),
       ),

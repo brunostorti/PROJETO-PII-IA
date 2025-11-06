@@ -26,8 +26,10 @@ class FirebaseStorageService {
       // Upload do arquivo
       final UploadTask uploadTask = ref.putFile(imageFile);
 
-      // Aguardar upload e obter URL
+      // Aguardar upload e obter URL com token de autenticação
       final TaskSnapshot snapshot = await uploadTask;
+      // getDownloadURL() já retorna URL com token, válida por 1 hora
+      // Isso evita problemas de CORS
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
       return downloadUrl;
@@ -97,8 +99,10 @@ class FirebaseStorageService {
       // Upload do arquivo
       final UploadTask uploadTask = ref.putFile(imageFile);
 
-      // Aguardar upload e obter URL
+      // Aguardar upload e obter URL com token de autenticação
       final TaskSnapshot snapshot = await uploadTask;
+      // getDownloadURL() já retorna URL com token, válida por 1 hora
+      // Isso evita problemas de CORS
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
       return downloadUrl;

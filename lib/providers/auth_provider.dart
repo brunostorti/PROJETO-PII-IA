@@ -110,6 +110,24 @@ class AuthProvider extends ChangeNotifier {
       );
       if (result != null) {
         _user = result.user;
+        
+        // Criar documento do usuário na coleção 'users' automaticamente
+        if (_user?.uid != null) {
+          try {
+            await UserService.createUserDocument(
+              uid: _user!.uid,
+              email: email,
+              displayName: _user!.displayName,
+              role: 'user', // Todos os cadastros são 'user' por padrão
+            );
+            print('Documento do usuário criado automaticamente no Firestore');
+          } catch (e) {
+            print('Aviso: Erro ao criar documento do usuário (não crítico): $e');
+            // Não falhar o cadastro se o documento não for criado
+            // O usuário pode ser criado manualmente depois se necessário
+          }
+        }
+        
         notifyListeners();
         return true;
       }

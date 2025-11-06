@@ -51,6 +51,7 @@ class Project {
   final DateTime? endDate;
   final ProjectStatus status;
   final List<String> imageUrls; // Changed from imagePaths to imageUrls for Firebase Storage
+  final List<String> assignedUsers; // Usuários atribuídos ao projeto
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -64,6 +65,7 @@ class Project {
     this.endDate,
     required this.status,
     required this.imageUrls,
+    this.assignedUsers = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -78,6 +80,7 @@ class Project {
     DateTime? endDate,
     ProjectStatus? status,
     List<String>? imageUrls,
+    List<String>? assignedUsers,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -91,6 +94,7 @@ class Project {
       endDate: endDate ?? this.endDate,
       status: status ?? this.status,
       imageUrls: imageUrls ?? this.imageUrls,
+      assignedUsers: assignedUsers ?? this.assignedUsers,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -107,6 +111,7 @@ class Project {
       'endDate': endDate?.toIso8601String(),
       'status': status.key,
       'imageUrls': imageUrls,
+      'assignedUsers': assignedUsers,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -126,6 +131,7 @@ class Project {
         orElse: () => ProjectStatus.planning,
       ),
       imageUrls: List<String>.from(json['imageUrls'] as List<dynamic>? ?? []),
+      assignedUsers: List<String>.from(json['assignedUsers'] as List<dynamic>? ?? []),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -151,6 +157,7 @@ class Project {
       'endDate': endDate,
       'status': status.key,
       'imageUrls': imageUrls,
+      'assignedUsers': assignedUsers,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -172,6 +179,7 @@ class Project {
         orElse: () => ProjectStatus.planning,
       ),
       imageUrls: List<String>.from(data['imageUrls'] as List<dynamic>? ?? []),
+      assignedUsers: List<String>.from(data['assignedUsers'] as List<dynamic>? ?? []),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );

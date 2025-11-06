@@ -70,20 +70,27 @@ class ProjectProvider extends ChangeNotifier {
     ProjectStatus status = ProjectStatus.planning,
     List<File>? imageFiles,
   }) async {
-    if (_currentUserId == null) return false;
+    if (_currentUserId == null) {
+      print('Erro: userId é null ao criar projeto');
+      return false;
+    }
 
     try {
       _isLoading = true;
       notifyListeners();
 
+      print('Criando projeto para userId: $_currentUserId');
+
       // Upload de imagens se fornecidas
       List<String> imageUrls = [];
       if (imageFiles != null && imageFiles.isNotEmpty) {
+        print('Fazendo upload de ${imageFiles.length} imagens...');
         imageUrls = await ImageService.uploadMultipleImagesToFirebase(
           images: imageFiles,
           userId: _currentUserId!,
           projectId: ProjectService.generateProjectId(),
         );
+        print('Upload concluído. ${imageUrls.length} URLs obtidas');
       }
 
       // Criar projeto
@@ -97,11 +104,23 @@ class ProjectProvider extends ChangeNotifier {
         imageUrls: imageUrls,
       );
 
+      print('Projeto criado localmente. ID: ${project.id}');
+      print('Dados do projeto: ${project.toFirestore()}');
+
       // Salvar no Firestore
+      print('Salvando projeto no Firestore...');
       final success = await ProjectService.saveProject(project);
+      
+      if (success) {
+        print('Projeto salvo com sucesso!');
+      } else {
+        print('Erro: Falha ao salvar projeto no Firestore');
+      }
+      
       return success;
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Erro ao adicionar projeto: $e');
+      print('Stack trace: $stackTrace');
       return false;
     } finally {
       _isLoading = false;
@@ -216,6 +235,15 @@ class ProjectProvider extends ChangeNotifier {
       print('Erro ao remover imagem do projeto: $e');
       return false;
     }
+  }
+
+  // Limpar projetos (usado no logout)
+  void clearProjects() {
+    _projectsSubscription?.cancel();
+    _projects = [];
+    _currentUserId = null;
+    _isLoading = false;
+    notifyListeners();
   }
 
   // Limpar recursos

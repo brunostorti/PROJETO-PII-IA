@@ -181,14 +181,23 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro ao criar obra'), backgroundColor: AppTheme.errorColor),
+            const SnackBar(
+              content: Text('Erro ao criar obra. Verifique o console para mais detalhes.'),
+              backgroundColor: AppTheme.errorColor,
+              duration: Duration(seconds: 5),
+            ),
           );
         }
       }
-    } catch (_) {
+    } catch (e) {
+      print('Erro no formulário: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao criar obra'), backgroundColor: AppTheme.errorColor),
+          SnackBar(
+            content: Text('Erro ao criar obra: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {

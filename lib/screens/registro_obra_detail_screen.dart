@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../services/registro_obra_service.dart';
 import '../models/registro_obra.dart';
 import '../utils/app_theme.dart';
+import '../widgets/safe_image.dart';
 
 class RegistroObraDetailScreen extends StatelessWidget {
   final String registroId;
@@ -37,24 +38,14 @@ class RegistroObraDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Hero(
-                    tag: r.id,
-                    child: Image.network(
-                      r.imageUrl,
-                      width: double.infinity,
-                      height: 240,
-                      fit: BoxFit.cover,
-                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                        if (wasSynchronouslyLoaded) return child;
-                        return AnimatedOpacity(
-                          opacity: frame == null ? 0 : 1,
-                          duration: const Duration(milliseconds: 300),
-                          child: child,
-                        );
-                      },
-                    ),
+                Hero(
+                  tag: r.id,
+                  child: SafeImage(
+                    imageUrl: r.imageUrl,
+                    width: double.infinity,
+                    height: 240,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 const SizedBox(height: 16),
