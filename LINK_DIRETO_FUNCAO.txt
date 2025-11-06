@@ -1,0 +1,19 @@
+🔗 LINK DIRETO PARA A FUNÇÃO compareImages:
+
+https://console.cloud.google.com/functions/details/us-central1/compareImages?project=projeto-pi-1c9e3
+
+📋 O QUE FAZER:
+
+1. Clique na aba "PERMISSIONS" (Permissões)
+2. Clique em "ADD PRINCIPAL" (Adicionar principal)
+3. Em "New principals", digite: allUsers
+4. Em "Select a role", escolha: Cloud Functions Invoker
+5. Clique em "SAVE" (Salvar)
+
+✅ PRONTO!
+
+⚠️ IMPORTANTE:
+- Faça isso na FUNÇÃO, não no PROJETO!
+- O Google Cloud não permite allUsers no nível do projeto
+- Mas permite na função específica!
+

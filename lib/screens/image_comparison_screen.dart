@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/registro_obra.dart';
 import '../models/image_comparison.dart';
+import '../models/project.dart';
 import '../services/ai_comparison_service.dart';
 import '../services/registro_obra_service.dart';
 import '../services/image_service.dart';
+import '../services/project_service.dart';
 import '../services/firebase_storage_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'project_detail_screen.dart';
 import '../widgets/comparison_result_widget.dart';
 import '../widgets/safe_image.dart';
 import '../utils/app_theme.dart';
@@ -74,22 +79,28 @@ class _ImageComparisonScreenState extends State<ImageComparisonScreen> {
       File? imageFile;
       Uint8List? imageBytes;
 
-      if (kIsWeb) {
-        // Web: usar image picker
-        final ImagePicker picker = ImagePicker();
-        final XFile? pickedFile = await picker.pickImage(
-          source: ImageSource.gallery,
-          maxWidth: 1920,
-          maxHeight: 1080,
-          imageQuality: 85,
-        );
+      // Usar file_picker para abrir explorador de arquivos (funciona em web e desktop)
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
 
-        if (pickedFile != null) {
-          imageBytes = await pickedFile.readAsBytes();
+      if (result != null) {
+        if (kIsWeb) {
+          // Web: usar bytes diretamente
+          if (result.files.single.bytes != null) {
+            imageBytes = result.files.single.bytes;
+          } else if (result.files.single.path != null) {
+            // Fallback: se tiver path, tentar ler
+            final XFile xFile = XFile(result.files.single.path!);
+            imageBytes = await xFile.readAsBytes();
+          }
+        } else {
+          // Mobile/Desktop: usar File
+          if (result.files.single.path != null) {
+            imageFile = File(result.files.single.path!);
+          }
         }
-      } else {
-        // Mobile/Desktop: usar file picker ou image picker
-        imageFile = await ImageService.pickImageFromGallery();
       }
 
       if (mounted) {
@@ -293,6 +304,11 @@ class _ImageComparisonScreenState extends State<ImageComparisonScreen> {
       if (mounted) {
         setState(() {
           _currentComparison = comparison.id == comparisonId ? comparison : null;
+          // Atualizar URLs das imagens para exibição
+          if (_currentComparison != null) {
+            _baseImageUrl = _currentComparison!.baseImageUrl;
+            _comparedImageUrl = _currentComparison!.comparedImageUrl;
+          }
           if (comparison.status == ComparisonStatus.completed ||
               comparison.status == ComparisonStatus.error) {
             _isComparing = false;
@@ -321,12 +337,119 @@ class _ImageComparisonScreenState extends State<ImageComparisonScreen> {
     });
   }
 
+  Future<void> _saveComparisonToProject(ImageComparison comparison) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('Usuário não autenticado');
+      }
+
+      Project? project;
+      
+      // Se tem projectId, buscar o projeto existente
+      if (widget.projectId != null) {
+        project = await ProjectService.getProject(widget.projectId!);
+      }
+
+      // Se não existe projeto, criar um novo baseado na comparação
+      if (project == null) {
+        project = ProjectService.createProject(
+          userId: user.uid,
+          name: 'Obra - ${comparison.pontoObra}',
+          description: 'Obra criada a partir de comparação de imagens',
+          location: comparison.pontoObra,
+          startDate: comparison.timestamp,
+          status: ProjectStatus.inProgress,
+          imageUrls: [comparison.baseImageUrl, comparison.comparedImageUrl],
+          baseImageUrl: comparison.baseImageUrl,
+          baseImageRegistroId: comparison.baseRegistroId,
+        );
+        
+        await ProjectService.saveProject(project);
+        print('✅ Nova obra criada: ${project.id}');
+      } else {
+        // Se já existe, atualizar com imagem base se necessário
+        if (project.baseImageUrl == null || project.baseImageRegistroId == null) {
+          final updatedProject = project.copyWith(
+            baseImageUrl: comparison.baseImageUrl,
+            baseImageRegistroId: comparison.baseRegistroId,
+            imageUrls: [
+              ...project.imageUrls,
+              comparison.baseImageUrl,
+              comparison.comparedImageUrl,
+            ],
+          );
+          await ProjectService.updateProject(updatedProject);
+          project = updatedProject;
+        }
+      }
+
+      // Atualizar a comparação com o projectId se não tiver
+      if (comparison.projectId != project.id) {
+        await FirebaseFirestore.instance
+            .collection('image_comparisons')
+            .doc(comparison.id)
+            .update({'projectId': project.id});
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Comparação salva na obra "${project.name}" com sucesso!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Ver Obra',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => ProjectDetailScreen(project: project!),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Erro ao salvar comparação no projeto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Comparação de Imagens'),
+        title: const Text(
+          'Comparação de Imagens',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         backgroundColor: AppTheme.lightTheme.primaryColor,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.lightTheme.primaryColor,
+                AppTheme.lightTheme.primaryColor.withOpacity(0.8),
+              ],
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -387,9 +510,13 @@ class _ImageComparisonScreenState extends State<ImageComparisonScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Resultados
-            if (_currentComparison != null)
-              ComparisonResultWidget(comparison: _currentComparison!),
+                // Resultados
+                if (_currentComparison != null)
+                  ComparisonResultWidget(
+                    comparison: _currentComparison!,
+                    showSaveButton: _currentComparison!.status == ComparisonStatus.completed,
+                    onSaveToProject: () => _saveComparisonToProject(_currentComparison!),
+                  ),
           ],
         ),
       ),
@@ -512,15 +639,8 @@ class _ImageComparisonScreenState extends State<ImageComparisonScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: imageUrl != null
-                          ? SafeImage(
-                              imageUrl: imageUrl,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              borderRadius: BorderRadius.circular(8),
-                            )
-                          : kIsWeb && imageBytes != null
+                      child: // Priorizar arquivo/bytes locais sobre URL do Storage (evita CORS)
+                          kIsWeb && imageBytes != null
                               ? Image.memory(
                                   imageBytes!,
                                   width: double.infinity,
@@ -534,7 +654,15 @@ class _ImageComparisonScreenState extends State<ImageComparisonScreen> {
                                       height: double.infinity,
                                       fit: BoxFit.cover,
                                     )
-                                  : const SizedBox(),
+                                  : imageUrl != null
+                                      ? SafeImage(
+                                          imageUrl: imageUrl!,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          fit: BoxFit.cover,
+                                          borderRadius: BorderRadius.circular(8),
+                                        )
+                                      : const SizedBox(),
                     ),
                     Positioned(
                       top: 8,

@@ -38,6 +38,7 @@ dependencies:
   # Camera and image picker
   image_picker: ^1.0.4
   camera: ^0.10.5+5
+  file_picker: ^6.1.1
 
   # State management
   provider: ^6.1.1
@@ -59,6 +60,8 @@ dependencies:
   # HTTP for API calls
   http: ^1.1.0
   cloud_functions: ^5.6.2
+  # Charts for evolution history
+  fl_chart: ^0.68.0
   # flutter_svg removed due to compatibility issues in current Flutter SDK
 
 dev_dependencies:
@@ -71,9 +74,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-
-  # Firebase CLI
-  flutterfire_cli: ^0.1.1+2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

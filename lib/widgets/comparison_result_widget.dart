@@ -4,10 +4,14 @@ import '../utils/app_theme.dart';
 
 class ComparisonResultWidget extends StatelessWidget {
   final ImageComparison comparison;
+  final VoidCallback? onSaveToProject;
+  final bool showSaveButton;
 
   const ComparisonResultWidget({
     super.key,
     required this.comparison,
+    this.onSaveToProject,
+    this.showSaveButton = false,
   });
 
   @override
@@ -120,6 +124,24 @@ class ComparisonResultWidget extends StatelessWidget {
             // Informações adicionais
             const SizedBox(height: 16),
             _buildInfoCard(),
+
+            // Botão Salvar no Projeto
+            if (showSaveButton && onSaveToProject != null) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onSaveToProject,
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salvar no Projeto'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

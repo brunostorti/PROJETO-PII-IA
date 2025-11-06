@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/project.dart';
+import 'firebase_storage_service.dart';
 
 class ProjectService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -136,17 +137,96 @@ class ProjectService {
     }
   }
 
-  // Deletar projeto do Firestore
-  static Future<bool> deleteProject(String id) async {
+  // Deletar projeto e todos os dados associados
+  static Future<bool> deleteProject(String id, String userId) async {
     try {
-      await _firestore
-          .collection(_collectionName)
-          .doc(id)
-          .delete();
+      print('🗑️ Iniciando exclusão do projeto $id para usuário $userId');
+      
+      // 1. Deletar todas as comparações associadas ao projeto
+      try {
+        final comparisonsSnapshot = await _firestore
+            .collection('image_comparisons')
+            .where('projectId', isEqualTo: id)
+            .where('userId', isEqualTo: userId)
+            .get();
 
+        print('📊 Encontradas ${comparisonsSnapshot.docs.length} comparações para deletar');
+        
+        for (var doc in comparisonsSnapshot.docs) {
+          try {
+            final comparison = doc.data();
+            // Deletar imagens do Storage (ignorar erros se a imagem já não existir)
+            if (comparison['baseImageUrl'] != null) {
+              try {
+                await FirebaseStorageService.deleteImage(comparison['baseImageUrl']);
+              } catch (e) {
+                print('⚠️ Erro ao deletar imagem base (pode já não existir): $e');
+              }
+            }
+            if (comparison['comparedImageUrl'] != null) {
+              try {
+                await FirebaseStorageService.deleteImage(comparison['comparedImageUrl']);
+              } catch (e) {
+                print('⚠️ Erro ao deletar imagem comparada (pode já não existir): $e');
+              }
+            }
+            await doc.reference.delete();
+          } catch (e) {
+            print('⚠️ Erro ao deletar comparação ${doc.id}: $e');
+            // Continuar mesmo se houver erro em uma comparação
+          }
+        }
+      } catch (e) {
+        print('⚠️ Erro ao buscar/deletar comparações: $e');
+        // Continuar mesmo se houver erro
+      }
+
+      // 2. Deletar todos os registros de obra associados
+      try {
+        final registrosSnapshot = await _firestore
+            .collection('registros_obra')
+            .where('projectId', isEqualTo: id)
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        print('📝 Encontrados ${registrosSnapshot.docs.length} registros para deletar');
+        
+        for (var doc in registrosSnapshot.docs) {
+          try {
+            final registro = doc.data();
+            // Deletar imagem do Storage (ignorar erros se a imagem já não existir)
+            if (registro['imageUrl'] != null) {
+              try {
+                await FirebaseStorageService.deleteImage(registro['imageUrl']);
+              } catch (e) {
+                print('⚠️ Erro ao deletar imagem do registro (pode já não existir): $e');
+              }
+            }
+            await doc.reference.delete();
+          } catch (e) {
+            print('⚠️ Erro ao deletar registro ${doc.id}: $e');
+            // Continuar mesmo se houver erro em um registro
+          }
+        }
+      } catch (e) {
+        print('⚠️ Erro ao buscar/deletar registros: $e');
+        // Continuar mesmo se houver erro
+      }
+
+      // 3. Deletar o projeto (sempre tentar, mesmo se houver erros anteriores)
+      try {
+        await _firestore.collection(_collectionName).doc(id).delete();
+        print('✅ Projeto $id deletado do Firestore');
+      } catch (e) {
+        print('❌ Erro ao deletar projeto do Firestore: $e');
+        throw e; // Se falhar ao deletar o projeto, lançar erro
+      }
+
+      print('✅ Projeto $id e todos os dados associados deletados com sucesso');
       return true;
     } catch (e) {
-      print('Erro ao deletar projeto: $e');
+      print('❌ Erro ao deletar projeto $id: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
       return false;
     }
   }
@@ -165,6 +245,8 @@ class ProjectService {
     required DateTime startDate,
     ProjectStatus status = ProjectStatus.planning,
     List<String>? imageUrls,
+    String? baseImageUrl,
+    String? baseImageRegistroId,
   }) {
     final id = generateProjectId();
     final now = DateTime.now();
@@ -178,6 +260,8 @@ class ProjectService {
       startDate: startDate,
       status: status,
       imageUrls: imageUrls ?? [],
+      baseImageUrl: baseImageUrl,
+      baseImageRegistroId: baseImageRegistroId,
       createdAt: now,
       updatedAt: now,
     );

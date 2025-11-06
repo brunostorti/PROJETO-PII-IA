@@ -1,0 +1,13 @@
+🔗 LINK DIRETO PARA CONFIGURAR IAM:
+
+https://console.cloud.google.com/iam-admin/iam?project=projeto-pi-1c9e3
+
+📋 O QUE FAZER:
+
+1. Clique no botão "GRANT ACCESS" (ou "CONCEDER ACESSO")
+2. Em "New principals", digite: allUsers
+3. Em "Select a role", escolha: Cloud Functions Invoker
+4. Clique em "SAVE"
+
+✅ PRONTO!
+

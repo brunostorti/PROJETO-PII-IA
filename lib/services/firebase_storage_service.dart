@@ -140,12 +140,32 @@ class FirebaseStorageService {
   // Deletar uma imagem
   static Future<void> deleteImage(String imageUrl) async {
     try {
+      if (imageUrl.isEmpty || !imageUrl.contains('firebasestorage.googleapis.com')) {
+        print('⚠️ URL inválida ou não é do Firebase Storage: $imageUrl');
+        return; // Não é uma URL válida do Firebase Storage
+      }
+      
       // Extrair o path da URL
       final Reference ref = _storage.refFromURL(imageUrl);
-      await ref.delete();
+      
+      // Verificar se o arquivo existe antes de tentar deletar
+      try {
+        await ref.getMetadata();
+        // Se chegou aqui, o arquivo existe, então deletar
+        await ref.delete();
+        print('✅ Imagem deletada: ${ref.fullPath}');
+      } catch (e) {
+        // Se o arquivo não existe, não é um erro crítico
+        if (e.toString().contains('not found') || e.toString().contains('does not exist')) {
+          print('⚠️ Imagem já não existe: ${ref.fullPath}');
+          return; // Não é um erro, apenas não existe mais
+        }
+        throw e; // Re-lançar se for outro tipo de erro
+      }
     } catch (e) {
-      print('Erro ao deletar imagem: $e');
-      throw Exception('Erro ao deletar imagem: $e');
+      print('⚠️ Erro ao deletar imagem (continuando mesmo assim): $e');
+      // Não lançar exceção - apenas logar o erro
+      // Isso permite que a exclusão do projeto continue mesmo se algumas imagens falharem
     }
   }
 

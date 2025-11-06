@@ -142,18 +142,22 @@ class ProjectProvider extends ChangeNotifier {
   // Deletar projeto e suas imagens
   Future<bool> deleteProject(String id) async {
     try {
-      // Encontrar o projeto para obter as URLs das imagens
-      final project = _projects.where((p) => p.id == id).firstOrNull;
+      // Encontrar o projeto para obter as URLs das imagens e userId
+      final projectToDelete = _projects.where((p) => p.id == id).firstOrNull;
       
-      if (project != null && _currentUserId != null) {
+      if (projectToDelete == null) {
+        return false;
+      }
+
+      if (_currentUserId != null) {
         // Deletar imagens do Firebase Storage
-        if (project.imageUrls.isNotEmpty) {
-          await FirebaseStorageService.deleteMultipleImages(project.imageUrls);
+        if (projectToDelete.imageUrls.isNotEmpty) {
+          await FirebaseStorageService.deleteMultipleImages(projectToDelete.imageUrls);
         }
       }
 
-      // Deletar projeto do Firestore
-      final success = await ProjectService.deleteProject(id);
+      // Deletar projeto do Firestore (precisa do userId)
+      final success = await ProjectService.deleteProject(id, projectToDelete.userId);
       return success;
     } catch (e) {
       print('Erro ao deletar projeto: $e');

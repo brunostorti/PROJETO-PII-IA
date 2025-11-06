@@ -15,6 +15,10 @@ import 'registros_timeline_screen.dart';
 import 'project_form_screen.dart';
 import 'auth_screen.dart';
 import 'image_comparison_screen.dart';
+import 'evolution_history_screen.dart';
+import 'project_detail_screen.dart';
+import '../models/project.dart';
+import '../services/project_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -66,6 +70,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const ImageComparisonScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: 'Histórico de Evolução',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const EvolutionHistoryScreen(),
                 ),
               );
             },
@@ -200,13 +215,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => RegistrosTimelineScreen(
-                                        projectId: project.id,
-                                        projectName: project.name,
+                                      builder: (_) => ProjectDetailScreen(
+                                        project: project,
                                       ),
                                     ),
                                   );
                                 },
+                                onDelete: () => _confirmDeleteProject(context, project),
                               ),
                             );
                           },
@@ -237,6 +252,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   
+
+  Future<void> _confirmDeleteProject(BuildContext context, Project project) async {
+    final authProvider = context.read<AuthProvider>();
+    final projectProvider = context.read<ProjectProvider>();
+
+    if (authProvider.userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Você precisa estar logado para excluir uma obra.')),
+      );
+      return;
+    }
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirmar Exclusão'),
+          content: Text(
+            'Tem certeza que deseja excluir a obra "${project.name}"?\n\n'
+            'Esta ação irá deletar:\n'
+            '• A obra e todas as suas informações\n'
+            '• Todas as comparações de imagens associadas\n'
+            '• Todos os registros de obra\n'
+            '• Todas as imagens armazenadas\n\n'
+            'Esta ação é irreversível!',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Excluir'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Excluindo obra "${project.name}"...'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        final success = await ProjectService.deleteProject(project.id, authProvider.userId!);
+        
+        if (success) {
+          // Recarregar lista de projetos
+          projectProvider.initialize(authProvider.userId!);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Obra "${project.name}" excluída com sucesso!'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        } else {
+          throw Exception('Falha ao excluir obra');
+        }
+      } catch (e) {
+        print('Erro ao excluir obra: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao excluir obra: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    }
+  }
 
   Future<void> _selectProjectAndCapture(BuildContext context) async {
     final projectProvider = context.read<ProjectProvider>();

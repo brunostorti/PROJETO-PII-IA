@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../utils/app_theme.dart';
+import 'safe_image.dart';
 
 class ProjectCard extends StatefulWidget {
   final Project project;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const ProjectCard({
     super.key,
     required this.project,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -69,7 +72,7 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Cabeçalho moderno com nome e status
+                      // Cabeçalho moderno com nome, status e botão de exclusão
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,34 +103,50 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  _getStatusColor(widget.project.status).withOpacity(0.15),
-                                  _getStatusColor(widget.project.status).withOpacity(0.05),
-                                ],
+                          const SizedBox(width: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      _getStatusColor(widget.project.status).withOpacity(0.15),
+                                      _getStatusColor(widget.project.status).withOpacity(0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: _getStatusColor(widget.project.status).withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.project.status.displayName,
+                                  style: TextStyle(
+                                    color: _getStatusColor(widget.project.status),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: _getStatusColor(widget.project.status).withOpacity(0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              widget.project.status.displayName,
-                              style: TextStyle(
-                                color: _getStatusColor(widget.project.status),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
+                              if (widget.onDelete != null) ...[
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 20),
+                                  color: Colors.redAccent,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Excluir Obra',
+                                  onPressed: widget.onDelete,
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),
@@ -203,47 +222,55 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
 
                       const SizedBox(height: 16),
 
-                      // Galeria de imagens moderna
+                      // Galeria de imagens moderna - exibir imagens reais
                       if (widget.project.imageUrls.isNotEmpty)
                         Container(
-                          height: 100,
+                          height: 120,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             color: AppTheme.surfaceColor,
                           ),
                           padding: const EdgeInsets.all(12),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
-                                Icons.image_outlined,
-                                color: AppTheme.textSecondaryColor,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${widget.project.imageUrls.length} imagem(ns)',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppTheme.textSecondaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accentColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Ver Galeria',
-                                  style: TextStyle(
-                                    color: AppTheme.accentColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.image_outlined,
+                                    color: AppTheme.textSecondaryColor,
+                                    size: 18,
                                   ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${widget.project.imageUrls.length} imagem(ns)',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppTheme.textSecondaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Expanded(
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: widget.project.imageUrls.length > 3 ? 3 : widget.project.imageUrls.length,
+                                  itemBuilder: (context, index) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: SafeImage(
+                                          imageUrl: widget.project.imageUrls[index],
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ],

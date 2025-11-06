@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'firebase_options.dart';
 import 'utils/app_theme.dart';
@@ -22,6 +23,15 @@ void main() async {
       persistenceEnabled: false,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
+    
+    // Configurar Firebase Functions para web com região correta
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      // Testar se a instância foi criada corretamente
+      print('✅ Firebase Functions configurado para região: us-central1');
+    } catch (e) {
+      print('⚠️ Erro ao configurar Firebase Functions: $e');
+    }
   }
   runApp(const MyApp());
 }
