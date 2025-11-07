@@ -4,6 +4,7 @@ class RegistroObra {
   final String id;
   final String userId;
   final String? projectId;
+  final String? pontoId;
   final String imageUrl;
   final String pontoObra;
   final String etapaObra;
@@ -19,6 +20,7 @@ class RegistroObra {
     required this.id,
     required this.userId,
     this.projectId,
+    this.pontoId,
     required this.imageUrl,
     required this.pontoObra,
     required this.etapaObra,
@@ -35,6 +37,7 @@ class RegistroObra {
     String? id,
     String? userId,
     String? projectId,
+    String? pontoId,
     String? imageUrl,
     String? pontoObra,
     String? etapaObra,
@@ -50,6 +53,7 @@ class RegistroObra {
       id: id ?? this.id,
       userId: userId ?? this.userId,
       projectId: projectId ?? this.projectId,
+      pontoId: pontoId ?? this.pontoId,
       imageUrl: imageUrl ?? this.imageUrl,
       pontoObra: pontoObra ?? this.pontoObra,
       etapaObra: etapaObra ?? this.etapaObra,
@@ -68,6 +72,7 @@ class RegistroObra {
       'id': id,
       'userId': userId,
       'projectId': projectId,
+      'pontoId': pontoId,
       'imageUrl': imageUrl,
       'pontoObra': pontoObra,
       'etapaObra': etapaObra,
@@ -86,6 +91,7 @@ class RegistroObra {
       id: json['id'] as String,
       userId: json['userId'] as String,
       projectId: json['projectId'] as String?,
+      pontoId: json['pontoId'] as String?,
       imageUrl: json['imageUrl'] as String,
       pontoObra: json['pontoObra'] as String,
       etapaObra: json['etapaObra'] as String,
@@ -104,6 +110,7 @@ class RegistroObra {
     return {
       'userId': userId,
       if (projectId != null) 'projectId': projectId,
+      if (pontoId != null) 'pontoId': pontoId,
       'imageUrl': imageUrl,
       'pontoObra': pontoObra,
       'etapaObra': etapaObra,
@@ -122,6 +129,7 @@ class RegistroObra {
       id: id,
       userId: data['userId'] as String,
       projectId: data['projectId'] as String?,
+      pontoId: data['pontoId'] as String?,
       imageUrl: data['imageUrl'] as String,
       pontoObra: data['pontoObra'] as String,
       etapaObra: data['etapaObra'] as String,

@@ -138,6 +138,7 @@ class ImageComparison {
   final String id;
   final String userId;
   final String? projectId;
+  final String? pontoId;
   final String pontoObra;
   final String etapaObra;
 
@@ -160,6 +161,9 @@ class ImageComparison {
   final ComparisonStatus status;
   final String? errorMessage;
 
+  // Metadados retornados pela IA (subscores, contagens, etc.)
+  final Map<String, dynamic>? metadata;
+
   // Metadados
   final DateTime timestamp;
   final DateTime createdAt;
@@ -169,6 +173,7 @@ class ImageComparison {
     required this.id,
     required this.userId,
     this.projectId,
+    this.pontoId,
     required this.pontoObra,
     required this.etapaObra,
     required this.baseImageUrl,
@@ -180,6 +185,7 @@ class ImageComparison {
     this.detectedChanges = const [],
     required this.status,
     this.errorMessage,
+    this.metadata,
     required this.timestamp,
     required this.createdAt,
     required this.updatedAt,
@@ -189,6 +195,7 @@ class ImageComparison {
     String? id,
     String? userId,
     String? projectId,
+    String? pontoId,
     String? pontoObra,
     String? etapaObra,
     String? baseImageUrl,
@@ -200,6 +207,7 @@ class ImageComparison {
     List<DetectedChange>? detectedChanges,
     ComparisonStatus? status,
     String? errorMessage,
+    Map<String, dynamic>? metadata,
     DateTime? timestamp,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -208,6 +216,7 @@ class ImageComparison {
       id: id ?? this.id,
       userId: userId ?? this.userId,
       projectId: projectId ?? this.projectId,
+      pontoId: pontoId ?? this.pontoId,
       pontoObra: pontoObra ?? this.pontoObra,
       etapaObra: etapaObra ?? this.etapaObra,
       baseImageUrl: baseImageUrl ?? this.baseImageUrl,
@@ -219,6 +228,7 @@ class ImageComparison {
       detectedChanges: detectedChanges ?? this.detectedChanges,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
+      metadata: metadata ?? this.metadata,
       timestamp: timestamp ?? this.timestamp,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -230,6 +240,7 @@ class ImageComparison {
       'id': id,
       'userId': userId,
       'projectId': projectId,
+      'pontoId': pontoId,
       'pontoObra': pontoObra,
       'etapaObra': etapaObra,
       'baseImageUrl': baseImageUrl,
@@ -241,6 +252,7 @@ class ImageComparison {
       'detectedChanges': detectedChanges.map((e) => e.toJson()).toList(),
       'status': status.key,
       'errorMessage': errorMessage,
+      if (metadata != null) 'metadata': metadata,
       'timestamp': timestamp.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -252,6 +264,7 @@ class ImageComparison {
       id: json['id'] as String,
       userId: json['userId'] as String,
       projectId: json['projectId'] as String?,
+      pontoId: json['pontoId'] as String?,
       pontoObra: json['pontoObra'] as String,
       etapaObra: json['etapaObra'] as String,
       baseImageUrl: json['baseImageUrl'] as String,
@@ -269,6 +282,7 @@ class ImageComparison {
         orElse: () => ComparisonStatus.pending,
       ),
       errorMessage: json['errorMessage'] as String?,
+      metadata: json['metadata'] != null ? Map<String, dynamic>.from(json['metadata'] as Map) : null,
       timestamp: DateTime.parse(json['timestamp'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -280,6 +294,7 @@ class ImageComparison {
     return {
       'userId': userId,
       if (projectId != null) 'projectId': projectId,
+      if (pontoId != null) 'pontoId': pontoId,
       'pontoObra': pontoObra,
       'etapaObra': etapaObra,
       'baseImageUrl': baseImageUrl,
@@ -291,6 +306,7 @@ class ImageComparison {
       'detectedChanges': detectedChanges.map((e) => e.toJson()).toList(),
       'status': status.key,
       if (errorMessage != null) 'errorMessage': errorMessage,
+      if (metadata != null) 'metadata': metadata,
       'timestamp': timestamp,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -302,6 +318,7 @@ class ImageComparison {
       id: id,
       userId: data['userId'] as String,
       projectId: data['projectId'] as String?,
+      pontoId: data['pontoId'] as String?,
       pontoObra: data['pontoObra'] as String,
       etapaObra: data['etapaObra'] as String,
       baseImageUrl: data['baseImageUrl'] as String,
@@ -319,6 +336,7 @@ class ImageComparison {
         orElse: () => ComparisonStatus.pending,
       ),
       errorMessage: data['errorMessage'] as String?,
+      metadata: data['metadata'] != null ? Map<String, dynamic>.from(data['metadata'] as Map) : null,
       timestamp: (data['timestamp'] as Timestamp).toDate(),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),

@@ -291,28 +291,58 @@ class _FirebaseStorageImageState extends State<_FirebaseStorageImage> {
     }
 
     if (_hasError || _blobUrl == null) {
-      Widget errorWidget = widget.errorWidget ??
-          Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: widget.borderRadius,
-            ),
-            child: Icon(
-              Icons.broken_image_outlined,
-              size: (widget.height != null && widget.height! < 60) ? widget.height! * 0.4 : 40,
-              color: Colors.grey[400],
-            ),
-          );
-      
-      if (widget.borderRadius != null) {
-        return ClipRRect(
-          borderRadius: widget.borderRadius!,
-          child: errorWidget,
+      // Fallback: tentar exibir diretamente a URL (em alguns ambientes o download URL funciona sem CORS)
+      try {
+        Widget direct = Image.network(
+          widget.url,
+          width: widget.width,
+          height: widget.height,
+          fit: widget.fit,
+          errorBuilder: (context, error, stackTrace) {
+            final errorWidget = widget.errorWidget ??
+                Container(
+                  width: widget.width,
+                  height: widget.height,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: widget.borderRadius,
+                  ),
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    size: (widget.height != null && widget.height! < 60) ? widget.height! * 0.4 : 40,
+                    color: Colors.grey[400],
+                  ),
+                );
+            if (widget.borderRadius != null) {
+              return ClipRRect(borderRadius: widget.borderRadius!, child: errorWidget);
+            }
+            return errorWidget;
+          },
         );
+        if (widget.borderRadius != null) {
+          return ClipRRect(borderRadius: widget.borderRadius!, child: direct);
+        }
+        return direct;
+      } catch (_) {
+        Widget errorWidget = widget.errorWidget ??
+            Container(
+              width: widget.width,
+              height: widget.height,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: widget.borderRadius,
+              ),
+              child: Icon(
+                Icons.broken_image_outlined,
+                size: (widget.height != null && widget.height! < 60) ? widget.height! * 0.4 : 40,
+                color: Colors.grey[400],
+              ),
+            );
+        if (widget.borderRadius != null) {
+          return ClipRRect(borderRadius: widget.borderRadius!, child: errorWidget);
+        }
+        return errorWidget;
       }
-      return errorWidget;
     }
 
     // Usar Image.network com blob URL (não precisa de CORS)

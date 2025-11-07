@@ -4,6 +4,7 @@ import '../models/image_comparison.dart';
 import '../models/registro_obra.dart';
 import 'registro_obra_service.dart';
 import 'cloud_functions_service.dart';
+import 'ponto_obra_service.dart';
 
 class AIComparisonService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -79,10 +80,65 @@ class AIComparisonService {
     }
   }
 
+  /// Compara um registro atual com a imagem ideal de um ponto
+  /// Cria o documento de comparação e processa via Cloud Function
+  static Future<String> compareWithIdeal({
+    required String projectId,
+    required String pontoId,
+    required String registroId,
+  }) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('Usuário não autenticado');
+      }
+
+      final registro = await RegistroObraService.getRegistro(registroId);
+      if (registro == null) {
+        throw Exception('Registro não encontrado');
+      }
+
+      final ponto = await PontoObraService.getPonto(projectId: projectId, pontoId: pontoId);
+      if (ponto == null || ponto.idealImageUrl == null) {
+        throw Exception('Ponto não encontrado ou sem imagem ideal');
+      }
+
+      final comparisonId = _firestore.collection(_collectionName).doc().id;
+      final now = DateTime.now();
+
+      final comparison = ImageComparison(
+        id: comparisonId,
+        userId: user.uid,
+        projectId: projectId,
+        pontoId: pontoId,
+        pontoObra: registro.pontoObra,
+        etapaObra: registro.etapaObra,
+        baseImageUrl: ponto.idealImageUrl!,
+        comparedImageUrl: registro.imageUrl,
+        baseRegistroId: 'ponto:$pontoId:ideal',
+        comparedRegistroId: registroId,
+        status: ComparisonStatus.pending,
+        timestamp: now,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      await _firestore.collection(_collectionName).doc(comparisonId).set(comparison.toFirestore());
+
+      _processComparison(comparisonId, comparison, projectId: projectId, pontoId: pontoId);
+
+      return comparisonId;
+    } catch (e) {
+      print('Erro ao comparar com ideal: $e');
+      rethrow;
+    }
+  }
+
   /// Processa a comparação chamando a Cloud Function
   static Future<void> _processComparison(
     String comparisonId,
     ImageComparison comparison,
+    {String? projectId, String? pontoId}
   ) async {
     try {
       // Atualizar status para processing
@@ -97,6 +153,8 @@ class AIComparisonService {
         comparedImageUrl: comparison.comparedImageUrl,
         pontoObra: comparison.pontoObra,
         etapaObra: comparison.etapaObra,
+        projectId: projectId,
+        pontoId: pontoId,
       );
 
       // Processar resultados
@@ -106,12 +164,15 @@ class AIComparisonService {
               ?.map((e) => DetectedChange.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [];
+      final Map<String, dynamic>? metadata =
+          result['metadata'] != null ? Map<String, dynamic>.from(result['metadata'] as Map) : null;
 
       // Atualizar documento com resultados
       await _firestore.collection(_collectionName).doc(comparisonId).update({
         'evolutionPercentage': evolutionPercentage,
         'similarityScore': similarityScore,
         'detectedChanges': detectedChanges.map((e) => e.toJson()).toList(),
+        if (metadata != null) 'metadata': metadata,
         'status': ComparisonStatus.completed.key,
         'updatedAt': DateTime.now(),
       });
@@ -219,6 +280,26 @@ class AIComparisonService {
       print('Erro ao buscar comparações por projeto: $e');
       return [];
     }
+  }
+
+  /// Stream de comparações filtradas por projeto e pontoId
+  static Stream<List<ImageComparison>> getComparisonsByProjectAndPontoStream({
+    required String userId,
+    required String projectId,
+    required String pontoId,
+  }) {
+    return _firestore
+        .collection(_collectionName)
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      final comparisons = snapshot.docs
+          .map((doc) => ImageComparison.fromFirestore(doc.data(), doc.id))
+          .where((c) => c.projectId == projectId && c.pontoId == pontoId)
+          .toList();
+      comparisons.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return comparisons;
+    });
   }
 
   /// Deleta uma comparação

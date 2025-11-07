@@ -1,39 +1,3 @@
-# 🔒 Passo a Passo: Atualizar Regras do Firestore
-
-## 📍 Link Direto
-**Acesse**: https://console.firebase.google.com/project/projeto-pi-1c9e3/firestore/rules
-
----
-
-## 🎯 Passo a Passo Visual
-
-### **PASSO 1: Acessar o Firebase Console**
-
-1. **Clique no link acima** ou acesse:
-   - https://console.firebase.google.com/
-   - Selecione o projeto: **projeto-pi-1c9e3**
-
-### **PASSO 2: Navegar até Firestore Rules**
-
-1. No **menu lateral esquerdo**, procure por:
-   ```
-   🔥 Firestore Database
-   ```
-2. **Clique** em "Firestore Database"
-3. No topo da página, você verá **abas**:
-   ```
-   [Dados] [Índices] [Regras] [Uso]
-   ```
-4. **Clique na aba "Regras"** (Rules)
-
-### **PASSO 3: Editar as Regras**
-
-1. Você verá um **editor de código** com as regras atuais
-2. **Selecione TODO o conteúdo** (Ctrl+A)
-3. **Delete** o conteúdo antigo
-4. **Cole** o código completo abaixo:
-
-```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -159,39 +123,4 @@ service cloud.firestore {
     }
   }
 }
-```
-
-### **PASSO 4: Publicar as Regras**
-
-1. Após colar o código, **role a página para baixo**
-2. Você verá um botão **"Publicar"** (Publish) no canto superior direito
-3. **Clique em "Publicar"**
-4. Aguarde a confirmação: "Rules published successfully"
-
-### **PASSO 5: Verificar**
-
-1. Você deve ver uma mensagem verde: **"Rules published successfully"**
-2. As regras agora estão ativas!
-
----
-
-## ⚠️ Importante
-
-- **Não precisa criar a coleção manualmente** - ela será criada automaticamente quando o primeiro documento for salvo
-- **Se aparecer algum erro de sintaxe**, verifique se copiou todo o código corretamente
-- **As regras antigas serão substituídas** - isso é normal e esperado
-
----
-
-## ✅ Checklist
-
-- [ ] Acessei o Firebase Console
-- [ ] Naveguei até Firestore Database > Rules
-- [ ] Colei o código completo das regras
-- [ ] Cliquei em "Publicar"
-- [ ] Vi a mensagem de sucesso
-
----
-
-**Pronto!** As regras do Firestore estão atualizadas! 🎉
 

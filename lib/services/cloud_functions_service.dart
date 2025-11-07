@@ -22,6 +22,8 @@ class CloudFunctionsService {
     required String comparedImageUrl,
     required String pontoObra,
     required String etapaObra,
+    String? projectId,
+    String? pontoId,
   }) async {
     try {
       // Configurar Firebase Functions com região explícita
@@ -35,6 +37,8 @@ class CloudFunctionsService {
         'comparedImageUrl': comparedImageUrl,
         'pontoObra': pontoObra,
         'etapaObra': etapaObra,
+        if (projectId != null) 'projectId': projectId,
+        if (pontoId != null) 'pontoId': pontoId,
       };
 
       print('🔵 Chamando Cloud Function: $_compareImagesFunction');

@@ -15,3 +15,39 @@ android/**/build/
 *.iml
 .idea/
 .vscode/
+
+# Firebase & Environment
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.log
+
+# Node modules (Cloud Functions)
+functions/node_modules/
+functions/.env
+functions/.env.local
+
+# Sensitive files
+**/google-services.json
+**/GoogleService-Info.plist
+**/local.properties
+**/firebase_options.dart
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+*.iml
+.idea/
+.vscode/
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

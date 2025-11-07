@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../models/project.dart';
 import '../models/image_comparison.dart';
+import '../models/ponto_obra.dart';
 import '../services/ai_comparison_service.dart';
 import '../services/project_service.dart';
 import '../services/registro_obra_service.dart';
 import '../services/firebase_storage_service.dart';
+import '../services/ponto_obra_service.dart';
 import '../widgets/safe_image.dart';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart' as app_auth;
 import 'evolution_history_screen.dart';
+import 'ponto_obra_form_screen.dart';
+import 'ponto_detail_screen.dart';
+import 'project_users_screen.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
@@ -31,6 +38,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   List<ImageComparison> _comparisons = [];
   bool _isLoading = true;
   Project? _currentProject;
+  String? _selectedPontoId;
 
   @override
   void initState() {
@@ -87,6 +95,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
   }
 
+  Future<void> _openAddPonto() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PontoObraFormScreen(projectId: widget.project.id),
+      ),
+    );
+    if (created == true) {
+      await _loadData();
+    }
+  }
+
   Future<void> _addNewImageAndCompare() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -97,13 +116,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         return;
       }
 
-      // Verificar se tem imagem base
-      if (_currentProject?.baseImageUrl == null || 
-          _currentProject?.baseImageRegistroId == null) {
+      // Exigir seleção de ponto para comparar com o ideal do ponto
+      if (_selectedPontoId == null || _selectedPontoId!.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Primeiro defina uma imagem base para o projeto'),
-          ),
+          const SnackBar(content: Text('Selecione um ponto da obra para comparar')),
         );
         return;
       }
@@ -137,17 +153,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         return; // Usuário cancelou
       }
 
-      // Buscar o registro da imagem base para usar o mesmo pontoObra
-      final baseRegistro = await RegistroObraService.getRegistro(_currentProject!.baseImageRegistroId!);
-      if (baseRegistro == null) {
-        throw Exception('Registro da imagem base não encontrado.');
-      }
+      // Ponto da Obra: obter nome do ponto selecionado (opcional para registro)
+      String pontoObra = 'Ponto';
+      try {
+        final ponto = await PontoObraService.getPonto(projectId: widget.project.id, pontoId: _selectedPontoId!);
+        if (ponto != null) pontoObra = ponto.name;
+      } catch (_) {}
 
-      // Ponto da Obra é automaticamente o mesmo da imagem base - não precisa perguntar
-      final String pontoObra = baseRegistro.pontoObra;
-
-      // Apenas perguntar a etapa da obra
-      final etapaObra = await _showInputDialog('Etapa da Obra', initialValue: baseRegistro.etapaObra);
+      // Apenas perguntar a etapa da obra (sem baseRegistro)
+      final etapaObra = await _showInputDialog('Etapa da Obra', initialValue: null);
       if (etapaObra == null || etapaObra.isEmpty) {
         setState(() { _isLoading = false; });
         return;
@@ -183,10 +197,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
       await RegistroObraService.saveRegistro(newRegistro);
 
-      // Comparar com imagem base
-      final comparisonId = await AIComparisonService.compareImages(
-        baseRegistroId: _currentProject!.baseImageRegistroId!,
-        comparedRegistroId: newRegistro.id,
+      // Comparar com a imagem ideal do ponto
+      final comparisonId = await AIComparisonService.compareWithIdeal(
+        projectId: widget.project.id,
+        pontoId: _selectedPontoId!,
+        registroId: newRegistro.id,
       );
 
       // Recarregar todos os dados (projeto e comparações)
@@ -277,6 +292,33 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               );
             },
           ),
+          // Botão para gerenciar usuários (apenas para admin/dono do projeto)
+          Consumer<app_auth.AuthProvider>(
+            builder: (context, authProvider, _) {
+              final user = FirebaseAuth.instance.currentUser;
+              final isOwner = user != null && _currentProject?.userId == user.uid;
+              final isAdmin = authProvider.isAdmin;
+              
+              if (!isOwner && !isAdmin) {
+                return const SizedBox.shrink();
+              }
+              
+              return IconButton(
+                icon: const Icon(Icons.people),
+                tooltip: 'Gerenciar Usuários do Projeto',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProjectUsersScreen(
+                        projectId: widget.project.id,
+                        projectName: _currentProject?.name ?? widget.project.name,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ],
       ),
       body: _isLoading
@@ -286,7 +328,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Imagem Base
+                  // Pontos do Projeto
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -294,48 +336,106 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(Icons.image, color: Colors.blue),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Imagem Base do Projeto',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.place, color: Colors.blue),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Pontos da Obra',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _openAddPonto,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Adicionar Ponto'),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          if (_currentProject?.baseImageUrl != null)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: SafeImage(
-                                imageUrl: _currentProject!.baseImageUrl!,
-                                width: double.infinity,
-                                height: 200,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          else
-                            Container(
-                              width: double.infinity,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.image, size: 48, color: Colors.grey),
-                                    SizedBox(height: 8),
-                                    Text('Nenhuma imagem base definida'),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          StreamBuilder<List<PontoObra>>(
+                            stream: PontoObraService.getPontosStream(widget.project.id),
+                            builder: (context, snapshot) {
+                              final pontos = snapshot.data ?? [];
+                              if (pontos.isEmpty) {
+                                return const Text('Nenhum ponto cadastrado ainda.');
+                              }
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: pontos.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final p = pontos[index];
+                                  return InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => PontoDetailScreen(
+                                            projectId: widget.project.id,
+                                            pontoId: p.id,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.grey.shade200),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              bottomLeft: Radius.circular(12),
+                                            ),
+                                            child: p.idealImageUrl != null
+                                                ? SafeImage(
+                                                    imageUrl: p.idealImageUrl!,
+                                                    width: 120,
+                                                    height: 80,
+                                                    fit: BoxFit.cover,
+                                                    borderRadius: BorderRadius.circular(0),
+                                                  )
+                                                : Container(
+                                                    width: 120,
+                                                    height: 80,
+                                                    color: Colors.grey[200],
+                                                    child: const Icon(Icons.image, color: Colors.grey),
+                                                  ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  p.idealImageUrl != null ? 'Ideal definido' : 'Ideal não definido',
+                                                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const Icon(Icons.chevron_right),
+                                          const SizedBox(width: 8),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),

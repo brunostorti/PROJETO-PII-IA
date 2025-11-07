@@ -8,6 +8,7 @@ import '../utils/app_constants.dart';
 import '../utils/app_theme.dart';
 import '../widgets/project_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/skeleton_loader.dart';
 import '../providers/project_provider.dart';
 import '../providers/auth_provider.dart';
 import 'registro_obra_form_screen.dart';
@@ -60,48 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   );
                 },
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.compare_arrows),
-            tooltip: 'Comparar Imagens (IA)',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ImageComparisonScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.timeline),
-            tooltip: 'Histórico de Evolução',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const EvolutionHistoryScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const RegistrosTimelineScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const RegistrosTimelineScreen(),
-                ),
               );
             },
           ),
@@ -179,8 +138,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Consumer<ProjectProvider>(
             builder: (context, projectProvider, child) {
               if (projectProvider.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: 3,
+                  itemBuilder: (_, __) => const ProjectCardSkeleton(),
                 );
               }
 
@@ -237,13 +198,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: Consumer<AuthProvider>(
         builder: (context, auth, _) {
-          if (!auth.isLoggedIn) return const SizedBox.shrink();
+          if (!auth.isLoggedIn || !auth.isAdmin) return const SizedBox.shrink();
           return FloatingActionButton.extended(
             onPressed: () {
-              _selectProjectAndCapture(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ProjectFormScreen(),
+                ),
+              );
             },
-            icon: const Icon(Icons.add_a_photo),
-            label: const Text('Registrar Obra'),
+            icon: const Icon(Icons.add_business),
+            label: const Text('Nova Obra'),
             backgroundColor: AppTheme.primaryLight,
           );
         },

@@ -82,6 +82,67 @@ class FirebaseStorageService {
     }
   }
 
+  // Upload da imagem ideal do ponto (File)
+  static Future<String> uploadIdealImage({
+    required File imageFile,
+    required String projectId,
+    required String pontoId,
+  }) async {
+    try {
+      final String storagePath = 'projects/$projectId/pontos/$pontoId/ideal.jpg';
+      final Reference ref = _storage.ref().child(storagePath);
+      final UploadTask uploadTask = ref.putFile(imageFile);
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Erro ao fazer upload da imagem ideal do ponto: $e');
+      throw Exception('Erro ao fazer upload da imagem ideal do ponto: $e');
+    }
+  }
+
+  // Upload da imagem ideal do ponto (bytes - Web)
+  static Future<String> uploadIdealImageBytes({
+    required Uint8List bytes,
+    required String projectId,
+    required String pontoId,
+    String? fileName,
+  }) async {
+    try {
+      final String storagePath = 'projects/$projectId/pontos/$pontoId/ideal.jpg';
+      final Reference ref = _storage.ref().child(storagePath);
+
+      String? contentType;
+      if (fileName != null) {
+        final ext = path.extension(fileName).toLowerCase();
+        switch (ext) {
+          case '.png':
+            contentType = 'image/png';
+            break;
+          case '.webp':
+            contentType = 'image/webp';
+            break;
+          case '.gif':
+            contentType = 'image/gif';
+            break;
+          default:
+            contentType = 'image/jpeg';
+        }
+      } else {
+        contentType = 'image/jpeg';
+      }
+
+      final SettableMetadata metadata = SettableMetadata(contentType: contentType);
+      final UploadTask uploadTask = ref.putData(bytes, metadata);
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Erro ao fazer upload (bytes) da imagem ideal do ponto: $e');
+      throw Exception('Erro ao fazer upload (bytes) da imagem ideal do ponto: $e');
+    }
+  }
+
   // Upload de uma única imagem (método original para projetos)
   static Future<String> uploadImage({
     required File imageFile,
