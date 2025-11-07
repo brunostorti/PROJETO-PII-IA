@@ -55,9 +55,15 @@ INSTRUÇÕES DETALHADAS:
 
 3. MATERIAIS FALTANTES (missingMaterials):
    - Compare elementos estruturais, acabamentos, instalações que estão na imagem ideal mas NÃO estão na imagem real
-   - Exemplos: pilares, vigas, lajes, paredes, portas, janelas, revestimentos, instalações elétricas/hidráulicas
-   - Element: nome técnico do elemento (ex: "Pilar P-05", "Viga V-12", "Revestimento cerâmico")
+   - Exemplos: pilares, vigas, lajes, paredes, portas, janelas, revestimentos, instalações elétricas/hidráulicas, telhado, cobertura
+   - Element: nome técnico do elemento (ex: "Pilar P-05", "Viga V-12", "Revestimento cerâmico", "Telhado")
    - Description: descrição detalhada do que está faltando e onde deveria estar
+   - Position: coordenadas aproximadas onde o elemento deveria estar na imagem real (em porcentagem 0-100):
+     - x: posição horizontal (0 = esquerda, 100 = direita)
+     - y: posição vertical (0 = topo, 100 = base)
+     - width: largura aproximada em % da imagem
+     - height: altura aproximada em % da imagem
+   - Type: tipo do elemento ("structural" = estrutural, "finishing" = acabamento, "installation" = instalação, "roof" = telhado, "wall" = parede, "column" = pilar, "beam" = viga, "door" = porta, "window" = janela)
    - Confidence: 0.0 a 1.0 baseado na certeza da identificação
 
 4. DISCREPÂNCIAS (discrepancies):
@@ -108,6 +114,13 @@ FORMATO JSON OBRIGATÓRIO (sem markdown, apenas JSON puro):
     {
       "element": "string",
       "description": "string detalhada",
+      "position": {
+        "x": number (0-100),
+        "y": number (0-100),
+        "width": number (0-100),
+        "height": number (0-100)
+      },
+      "type": "structural|finishing|installation|roof|wall|column|beam|door|window",
       "confidence": number
     }
   ],

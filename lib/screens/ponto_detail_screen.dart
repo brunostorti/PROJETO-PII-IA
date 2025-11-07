@@ -204,35 +204,49 @@ class _PontoDetailScreenState extends State<PontoDetailScreen> {
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: (_ponto!.idealImageUrl != null && _ponto!.idealImageUrl!.isNotEmpty)
-                                    ? SafeImage(
-                                        imageUrl: _ponto!.idealImageUrl!,
-                                        width: double.infinity,
-                                        height: 220,
-                                        fit: BoxFit.cover,
-                                        borderRadius: BorderRadius.circular(16),
-                                      )
-                                    : Container(
-                                        height: 220,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[200],
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.image_outlined, size: 48, color: Colors.grey[400]),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Sem imagem ideal',
-                                              style: TextStyle(color: Colors.grey[600]),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: (_ponto!.idealImageUrl != null && _ponto!.idealImageUrl!.isNotEmpty)
+                                          ? Container(
+                                              width: double.infinity,
+                                              height: 220,
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    AppTheme.primaryColor.withOpacity(0.05),
+                                                    AppTheme.primaryColor.withOpacity(0.1),
+                                                  ],
+                                                ),
+                                              ),
+                                              child: SafeImage(
+                                                imageUrl: _ponto!.idealImageUrl!,
+                                                width: double.infinity,
+                                                height: 220,
+                                                fit: BoxFit.contain,
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                            )
+                                          : Container(
+                                              height: 220,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[200],
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.image_outlined, size: 48, color: Colors.grey[400]),
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    'Sem imagem ideal',
+                                                    style: TextStyle(color: Colors.grey[600]),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                              ),
+                                    ),
                               const SizedBox(height: 12),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -398,12 +412,19 @@ class _PontoDetailScreenState extends State<PontoDetailScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: comparison.comparedImageUrl.isNotEmpty
-                ? SafeImage(
-                    imageUrl: comparison.comparedImageUrl,
+                ? Container(
                     width: 70,
                     height: 70,
-                    fit: BoxFit.cover,
-                    borderRadius: BorderRadius.circular(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                    ),
+                    child: SafeImage(
+                      imageUrl: comparison.comparedImageUrl,
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.contain,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   )
                 : Container(
                     width: 70,

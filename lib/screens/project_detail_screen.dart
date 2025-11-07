@@ -739,12 +739,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: SafeImage(
-                          imageUrl: comparison.baseImageUrl,
+                        child: Container(
                           width: double.infinity,
                           height: 150,
-                          fit: BoxFit.cover,
-                          borderRadius: BorderRadius.circular(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                          ),
+                          child: SafeImage(
+                            imageUrl: comparison.baseImageUrl,
+                            width: double.infinity,
+                            height: 150,
+                            fit: BoxFit.contain,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ],
@@ -773,12 +780,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: SafeImage(
-                          imageUrl: comparison.comparedImageUrl,
+                        child: Container(
                           width: double.infinity,
                           height: 150,
-                          fit: BoxFit.cover,
-                          borderRadius: BorderRadius.circular(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                          ),
+                          child: SafeImage(
+                            imageUrl: comparison.comparedImageUrl,
+                            width: double.infinity,
+                            height: 150,
+                            fit: BoxFit.contain,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ],

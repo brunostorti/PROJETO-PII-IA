@@ -5,6 +5,7 @@ import '../models/image_comparison.dart';
 import '../services/ai_comparison_service.dart';
 import '../widgets/safe_image.dart';
 import '../widgets/modern_card.dart';
+import '../widgets/annotated_image_overlay.dart';
 import '../utils/app_theme.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -56,72 +57,67 @@ class _ReportScreenState extends State<ReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Comparação Visual
+                        // Comparação Visual - Design Melhorado
                         ModernCard(
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.compare_arrows, color: AppTheme.primaryColor, size: 24),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Comparação Visual',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.textPrimaryColor,
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ModernBadge(
-                                          label: 'Ideal',
-                                          icon: Icons.photo,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(16),
-                                          child: SafeImage(
-                                            imageUrl: _c!.baseImageUrl,
-                                            width: double.infinity,
-                                            height: 200,
-                                            fit: BoxFit.cover,
-                                            borderRadius: BorderRadius.circular(16),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    child: Icon(Icons.compare_arrows, color: AppTheme.primaryColor, size: 24),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        ModernBadge(
-                                          label: 'Real',
-                                          icon: Icons.camera_alt,
-                                          color: AppTheme.secondaryColor,
+                                        Text(
+                                          'Comparação Visual',
+                                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textPrimaryColor,
+                                          ),
                                         ),
-                                        const SizedBox(height: 12),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(16),
-                                          child: SafeImage(
-                                            imageUrl: _c!.comparedImageUrl,
-                                            width: double.infinity,
-                                            height: 200,
-                                            fit: BoxFit.cover,
-                                            borderRadius: BorderRadius.circular(16),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Ideal vs. Real',
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppTheme.textSecondaryColor,
                                           ),
                                         ),
                                       ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              // Imagens lado a lado com design melhorado
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildImageCard(
+                                      context,
+                                      'Ideal',
+                                      _c!.baseImageUrl,
+                                      AppTheme.primaryColor,
+                                      Icons.photo_library,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildImageCard(
+                                      context,
+                                      'Real',
+                                      _c!.comparedImageUrl,
+                                      AppTheme.secondaryColor,
+                                      Icons.camera_alt,
                                     ),
                                   ),
                                 ],
@@ -129,10 +125,17 @@ class _ReportScreenState extends State<ReportScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        // Progresso
+                        const SizedBox(height: 20),
+                        // Progresso - Design Melhorado
                         _buildProgressCard(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
+                        // Sobreposição Visual com Anotações
+                        if (_c!.metadata != null && 
+                            _c!.metadata!['gemini'] != null &&
+                            _hasFindings(_c!.metadata!['gemini'])) ...[
+                          _buildAnnotatedImageCard(),
+                          const SizedBox(height: 20),
+                        ],
                         // Relatório Gemini
                         if (_c!.metadata != null && _c!.metadata!['gemini'] != null) ...[
                           _buildGeminiReport(),
@@ -167,6 +170,68 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Widget _buildImageCard(BuildContext context, String label, String imageUrl, Color color, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: double.infinity,
+            height: 220,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withOpacity(0.05),
+                  color.withOpacity(0.1),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SafeImage(
+              imageUrl: imageUrl,
+              width: double.infinity,
+              height: 220,
+              fit: BoxFit.contain,
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildProgressCard() {
     final progress = _c!.metadata != null && 
                      _c!.metadata!['gemini'] != null && 
@@ -174,7 +239,14 @@ class _ReportScreenState extends State<ReportScreen> {
         ? (_c!.metadata!['gemini']['progress']['overallPercentage'] ?? _c!.evolutionPercentage ?? 0)
         : (_c!.evolutionPercentage ?? 0);
     
+    final progressColor = progress >= 75 
+        ? AppTheme.successColor 
+        : progress >= 50 
+            ? AppTheme.secondaryColor 
+            : AppTheme.warningColor;
+    
     return ModernCard(
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -183,10 +255,14 @@ class _ReportScreenState extends State<ReportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  gradient: LinearGradient(
+                    colors: [progressColor.withOpacity(0.2), progressColor.withOpacity(0.1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.analytics, color: AppTheme.primaryColor, size: 24),
+                child: Icon(Icons.analytics, color: progressColor, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -205,7 +281,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       '${progress.toStringAsFixed(1)}% Concluído',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
+                        color: progressColor,
                       ),
                     ),
                   ],
@@ -213,44 +289,61 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: LinearProgressIndicator(
-              value: progress / 100,
-              minHeight: 12,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(
-                progress >= 75 
-                    ? AppTheme.successColor 
-                    : progress >= 50 
-                        ? AppTheme.secondaryColor 
-                        : AppTheme.warningColor,
+          const SizedBox(height: 20),
+          // Barra de progresso melhorada
+          Stack(
+            children: [
+              Container(
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
+              FractionallySizedBox(
+                widthFactor: progress / 100,
+                child: Container(
+                  height: 16,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [progressColor, progressColor.withOpacity(0.7)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: progressColor.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           if (_c!.metadata != null && 
               _c!.metadata!['gemini'] != null && 
               _c!.metadata!['gemini']['progress'] != null &&
               _c!.metadata!['gemini']['progress']['rationale'] != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceColor,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.1)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, size: 18, color: AppTheme.textSecondaryColor),
-                  const SizedBox(width: 8),
+                  Icon(Icons.info_outline, size: 20, color: AppTheme.primaryColor),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _c!.metadata!['gemini']['progress']['rationale'] ?? '',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppTheme.textSecondaryColor,
-                        height: 1.5,
+                        height: 1.6,
                       ),
                     ),
                   ),
@@ -263,6 +356,185 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Widget _buildAnnotatedImageCard() {
+    final gemini = _c!.metadata!['gemini'] as Map<String, dynamic>?;
+    if (gemini == null) return const SizedBox.shrink();
+
+    return ModernCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.orange.withOpacity(0.2), Colors.red.withOpacity(0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.visibility, color: Colors.orange, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Análise Visual Detalhada',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Problemas destacados na imagem real',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Imagem com sobreposição
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              height: 300,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.grey.shade100,
+                    Colors.grey.shade200,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: AnnotatedImageOverlay(
+                imageUrl: _c!.comparedImageUrl,
+                geminiData: gemini,
+                width: double.infinity,
+                height: 300,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Legenda
+          _buildLegend(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Legenda - Elementos Faltantes',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimaryColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            children: [
+              _buildLegendItem('Telhado', Colors.blue.shade400),
+              _buildLegendItem('Parede', Colors.orange.shade400),
+              _buildLegendItem('Pilar', Colors.red.shade400),
+              _buildLegendItem('Viga', Colors.purple.shade400),
+              _buildLegendItem('Porta', Colors.green.shade400),
+              _buildLegendItem('Janela', Colors.cyan.shade400),
+              _buildLegendItem('Acabamento', Colors.amber.shade400),
+              _buildLegendItem('Instalação', Colors.teal.shade400),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: AppTheme.primaryColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Os elementos destacados em cores mostram o que falta para concluir a obra conforme o projeto ideal.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.textSecondaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppTheme.textSecondaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _hasFindings(Map<String, dynamic> gemini) {
+    final safety = gemini['safetyFindings'] as List?;
+    final materials = gemini['missingMaterials'] as List?;
+    final discrepancies = gemini['discrepancies'] as List?;
+    
+    return (safety?.isNotEmpty ?? false) ||
+           (materials?.isNotEmpty ?? false) ||
+           (discrepancies?.isNotEmpty ?? false);
+  }
+
   Widget _buildGeminiReport() {
     final gemini = _c!.metadata!['gemini'] as Map<String, dynamic>?;
     if (gemini == null) return const SizedBox.shrink();
@@ -270,18 +542,44 @@ class _ReportScreenState extends State<ReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              'Relatório da IA',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
+        ModernCard(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.primaryColor.withOpacity(0.2), AppTheme.primaryLight.withOpacity(0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 24),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Relatório Detalhado da IA',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Análise completa de segurança, materiais e discrepâncias',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         // Segurança
@@ -359,6 +657,7 @@ class _ReportScreenState extends State<ReportScreen> {
     required List<_ReportItem> items,
   }) {
     return ModernCard(
+      padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,55 +665,92 @@ class _ReportScreenState extends State<ReportScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [iconColor.withOpacity(0.2), iconColor.withOpacity(0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimaryColor,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${items.length} ${items.length == 1 ? 'item encontrado' : 'itens encontrados'}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(item.icon, color: item.iconColor, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textPrimaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.subtitle,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
+          const SizedBox(height: 20),
+          ...items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            return Container(
+              margin: EdgeInsets.only(bottom: index < items.length - 1 ? 12 : 0),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: item.iconColor.withOpacity(0.2),
+                  width: 1.5,
                 ),
-              ],
-            ),
-          )),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: item.iconColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(item.icon, color: item.iconColor, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item.subtitle,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondaryColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
