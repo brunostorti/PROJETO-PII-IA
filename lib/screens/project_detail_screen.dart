@@ -260,22 +260,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         title: Text(
           _currentProject?.name ?? widget.project.name,
           style: const TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
             fontSize: 20,
+            letterSpacing: -0.5,
           ),
         ),
-        backgroundColor: AppTheme.lightTheme.primaryColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.lightTheme.primaryColor,
-                AppTheme.lightTheme.primaryColor.withOpacity(0.8),
-              ],
-            ),
+          decoration: const BoxDecoration(
+            gradient: AppTheme.primaryGradient,
           ),
         ),
         actions: [
@@ -323,198 +317,705 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Pontos do Projeto
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(Icons.place, color: Colors.blue),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Pontos da Obra',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: _openAddPonto,
-                                icon: const Icon(Icons.add),
-                                label: const Text('Adicionar Ponto'),
-                              ),
-                            ],
+          : Container(
+              decoration: const BoxDecoration(
+                gradient: AppTheme.subtleBackgroundGradient,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Seção 1: Informações Principais do Projeto - Contexto inicial
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: _buildProjectInfoSection(context),
                           ),
-                          const SizedBox(height: 12),
-                          StreamBuilder<List<PontoObra>>(
-                            stream: PontoObraService.getPontosStream(widget.project.id),
-                            builder: (context, snapshot) {
-                              final pontos = snapshot.data ?? [];
-                              if (pontos.isEmpty) {
-                                return const Text('Nenhum ponto cadastrado ainda.');
-                              }
-                              return ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: pontos.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                itemBuilder: (context, index) {
-                                  final p = pontos[index];
-                                  return InkWell(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => PontoDetailScreen(
-                                            projectId: widget.project.id,
-                                            pontoId: p.id,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.grey.shade200),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: const BorderRadius.only(
-                                              topLeft: Radius.circular(12),
-                                              bottomLeft: Radius.circular(12),
-                                            ),
-                                            child: p.idealImageUrl != null
-                                                ? SafeImage(
-                                                    imageUrl: p.idealImageUrl!,
-                                                    width: 120,
-                                                    height: 80,
-                                                    fit: BoxFit.cover,
-                                                    borderRadius: BorderRadius.circular(0),
-                                                  )
-                                                : Container(
-                                                    width: 120,
-                                                    height: 80,
-                                                    color: Colors.grey[200],
-                                                    child: const Icon(Icons.image, color: Colors.grey),
-                                                  ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  p.idealImageUrl != null ? 'Ideal definido' : 'Ideal não definido',
-                                                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const Icon(Icons.chevron_right),
-                                          const SizedBox(width: 8),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Botão para adicionar nova imagem
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _addNewImageAndCompare,
-                      icon: const Icon(Icons.add_photo_alternate),
-                      label: const Text('Adicionar Nova Imagem e Comparar'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Gráfico de evolução
-                  if (_comparisons.isNotEmpty) ...[
-                    const Text(
-                      'Evolução do Projeto',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      height: 250,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: _buildEvolutionChart(),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
-                  ],
-                  // Histórico de comparações
-                  const Text(
-                    'Histórico de Comparações',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_comparisons.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(Icons.timeline, size: 64, color: Colors.grey[400]),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Nenhuma comparação ainda',
-                                style: TextStyle(color: Colors.grey[600]),
+                    // Seção 2: Pontos do Projeto - Estrutura da obra
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.cardGradient,
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.8),
+                                  width: 1.5,
+                                ),
+                                boxShadow: AppTheme.cardShadow,
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Adicione uma nova imagem para começar',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 12,
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    AppTheme.primaryColor.withOpacity(0.15),
+                                                    AppTheme.primaryLight.withOpacity(0.1),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(14),
+                                              ),
+                                              child: const Icon(Icons.place_rounded, color: AppTheme.primaryColor, size: 24),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'Pontos da Obra',
+                                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.textPrimaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            gradient: AppTheme.organicGradient,
+                                            borderRadius: BorderRadius.circular(20),
+                                            boxShadow: AppTheme.floatingShadow,
+                                          ),
+                                          child: OutlinedButton.icon(
+                                            onPressed: _openAddPonto,
+                                            icon: const Icon(Icons.add_rounded, color: Colors.white),
+                                            label: const Text(
+                                              'Adicionar Ponto',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              side: BorderSide.none,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    StreamBuilder<List<PontoObra>>(
+                                      stream: PontoObraService.getPontosStream(widget.project.id),
+                                      builder: (context, snapshot) {
+                                        final pontos = snapshot.data ?? [];
+                                        if (pontos.isEmpty) {
+                                          return Container(
+                                            padding: const EdgeInsets.all(32),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.surfaceColor,
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: Column(
+                                                children: [
+                                                  Icon(Icons.place_outlined, size: 48, color: AppTheme.textLightColor),
+                                                  const SizedBox(height: 12),
+                                                  Text(
+                                                    'Nenhum ponto cadastrado ainda',
+                                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                                      color: AppTheme.textSecondaryColor,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Adicione um ponto para começar',
+                                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                      color: AppTheme.textLightColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        return ListView.separated(
+                                          shrinkWrap: true,
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          itemCount: pontos.length,
+                                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                          itemBuilder: (context, index) {
+                                            final p = pontos[index];
+                                            return InkWell(
+                                              onTap: () {
+                                                Navigator.of(context).push(
+                                                  PageRouteBuilder(
+                                                    pageBuilder: (context, animation, secondaryAnimation) =>
+                                                        PontoDetailScreen(
+                                                          projectId: widget.project.id,
+                                                          pontoId: p.id,
+                                                        ),
+                                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                                      const begin = Offset(1.0, 0.0);
+                                                      const end = Offset.zero;
+                                                      const curve = Curves.easeInOutCubic;
+                                                      var tween = Tween(begin: begin, end: end).chain(
+                                                        CurveTween(curve: curve),
+                                                      );
+                                                      return SlideTransition(
+                                                        position: animation.drive(tween),
+                                                        child: FadeTransition(
+                                                          opacity: animation,
+                                                          child: child,
+                                                        ),
+                                                      );
+                                                    },
+                                                    transitionDuration: const Duration(milliseconds: 300),
+                                                  ),
+                                                );
+                                              },
+                                              borderRadius: BorderRadius.circular(18),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(18),
+                                                  border: Border.all(
+                                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                                    width: 1,
+                                                  ),
+                                                  boxShadow: AppTheme.subtleShadow,
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    ClipRRect(
+                                                      borderRadius: const BorderRadius.only(
+                                                        topLeft: Radius.circular(18),
+                                                        bottomLeft: Radius.circular(18),
+                                                      ),
+                                                      child: p.idealImageUrl != null
+                                                          ? SafeImage(
+                                                              imageUrl: p.idealImageUrl!,
+                                                              width: 100,
+                                                              height: 100,
+                                                              fit: BoxFit.cover,
+                                                              borderRadius: BorderRadius.circular(0),
+                                                            )
+                                                          : Container(
+                                                              width: 100,
+                                                              height: 100,
+                                                              decoration: BoxDecoration(
+                                                                gradient: LinearGradient(
+                                                                  colors: [
+                                                                    AppTheme.primaryColor.withOpacity(0.1),
+                                                                    AppTheme.primaryLight.withOpacity(0.05),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              child: Icon(Icons.image_outlined, color: AppTheme.textLightColor, size: 32),
+                                                            ),
+                                                    ),
+                                                    const SizedBox(width: 16),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            p.name,
+                                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                              fontWeight: FontWeight.w700,
+                                                              color: AppTheme.textPrimaryColor,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(height: 8),
+                                                          Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                            decoration: BoxDecoration(
+                                                              color: p.idealImageUrl != null
+                                                                  ? AppTheme.successColor.withOpacity(0.1)
+                                                                  : AppTheme.warningColor.withOpacity(0.1),
+                                                              borderRadius: BorderRadius.circular(12),
+                                                              border: Border.all(
+                                                                color: p.idealImageUrl != null
+                                                                    ? AppTheme.successColor.withOpacity(0.3)
+                                                                    : AppTheme.warningColor.withOpacity(0.3),
+                                                                width: 1,
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: [
+                                                                Icon(
+                                                                  p.idealImageUrl != null ? Icons.check_circle : Icons.pending,
+                                                                  size: 14,
+                                                                  color: p.idealImageUrl != null ? AppTheme.successColor : AppTheme.warningColor,
+                                                                ),
+                                                                const SizedBox(width: 6),
+                                                                Text(
+                                                                  p.idealImageUrl != null ? 'Ideal definido' : 'Ideal não definido',
+                                                                  style: TextStyle(
+                                                                    color: p.idealImageUrl != null ? AppTheme.successColor : AppTheme.warningColor,
+                                                                    fontSize: 12,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Icon(Icons.chevron_right_rounded, color: AppTheme.primaryColor),
+                                                    const SizedBox(width: 8),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    // Seção 3: Evolução do Projeto - Análise visual
+                    if (_comparisons.isNotEmpty) ...[
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - value)),
+                              child: _buildEvolutionSection(context),
+                            ),
+                          );
+                        },
                       ),
-                    )
-                  else
-                    ..._comparisons.map((comparison) => _buildComparisonCard(comparison)),
-                ],
+                      const SizedBox(height: 24),
+                    ],
+                    // Seção 4: Histórico de Comparações - Detalhes temporais
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: _buildComparisonsSection(context),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
+    );
+  }
+
+  // Seção de informações principais do projeto
+  Widget _buildProjectInfoSection(BuildContext context) {
+    final project = _currentProject ?? widget.project;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppTheme.cardGradient,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.8),
+          width: 1.5,
+        ),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título e Status
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.name,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimaryColor,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (project.description.isNotEmpty)
+                      Text(
+                        project.description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondaryColor,
+                          height: 1.5,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _getStatusColor(project.status),
+                      _getStatusColor(project.status).withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getStatusColor(project.status).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      project.status.displayName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Informações em Grid
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.location_on_rounded,
+                  label: 'Localização',
+                  value: project.location,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Início',
+                  value: _formatDate(project.startDate),
+                  color: AppTheme.secondaryColor,
+                ),
+              ),
+            ],
+          ),
+          if (project.endDate != null) ...[
+            const SizedBox(height: 16),
+            _buildInfoItem(
+              icon: Icons.event_available_rounded,
+              label: 'Data de Conclusão',
+              value: _formatDate(project.endDate!),
+              color: AppTheme.successColor,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.08),
+            color.withOpacity(0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withOpacity(0.2),
+                      color.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textSecondaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.textPrimaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(ProjectStatus status) {
+    switch (status) {
+      case ProjectStatus.planning:
+        return AppTheme.warningColor;
+      case ProjectStatus.inProgress:
+        return AppTheme.primaryColor;
+      case ProjectStatus.completed:
+        return AppTheme.successColor;
+      case ProjectStatus.paused:
+        return AppTheme.accentColor;
+      case ProjectStatus.cancelled:
+        return AppTheme.errorColor;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  // Seção de Evolução do Projeto
+  Widget _buildEvolutionSection(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppTheme.cardGradient,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.8),
+          width: 1.5,
+        ),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor.withOpacity(0.15),
+                      AppTheme.primaryLight.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.trending_up_rounded, color: AppTheme.primaryColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Evolução do Projeto',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: 280,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: _buildEvolutionChart(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Seção de Histórico de Comparações
+  Widget _buildComparisonsSection(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppTheme.cardGradient,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.8),
+          width: 1.5,
+        ),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.secondaryColor.withOpacity(0.15),
+                      AppTheme.secondaryColor.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.history_rounded, color: AppTheme.secondaryColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Histórico de Comparações',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (_comparisons.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.timeline_rounded, size: 64, color: AppTheme.textLightColor),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Nenhuma comparação ainda',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Adicione uma nova imagem para começar',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textLightColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ..._comparisons.asMap().entries.map((entry) {
+              final index = entry.key;
+              final comparison = entry.value;
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: Duration(milliseconds: 300 + (index * 50)),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 15 * (1 - value)),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildComparisonCard(comparison),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
+        ],
+      ),
     );
   }
 
@@ -615,201 +1116,268 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _buildComparisonCard(ImageComparison comparison) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ponto: ${comparison.pontoObra}',
-                        style: const TextStyle(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: AppTheme.subtleShadow,
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.primaryColor.withOpacity(0.15),
+                                AppTheme.primaryLight.withOpacity(0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.place_rounded, color: AppTheme.primaryColor, size: 18),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          comparison.pontoObra,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.construction_rounded, size: 16, color: AppTheme.textSecondaryColor),
+                        const SizedBox(width: 6),
+                        Text(
+                          comparison.etapaObra,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.textSecondaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.successGradient,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.successColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '${comparison.evolutionPercentage?.toStringAsFixed(1)}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(Icons.access_time_rounded, size: 14, color: AppTheme.textLightColor),
+              const SizedBox(width: 6),
+              Text(
+                _formatDateTime(comparison.timestamp),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textLightColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Mensagem destacada sobre a evolução
+          if (comparison.evolutionPercentage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: comparison.evolutionPercentage! > 50
+                      ? [
+                          AppTheme.successColor.withOpacity(0.15),
+                          AppTheme.successColor.withOpacity(0.08),
+                        ]
+                      : comparison.evolutionPercentage! > 25
+                          ? [
+                              AppTheme.warningColor.withOpacity(0.15),
+                              AppTheme.warningColor.withOpacity(0.08),
+                            ]
+                          : [
+                              AppTheme.primaryColor.withOpacity(0.15),
+                              AppTheme.primaryColor.withOpacity(0.08),
+                            ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: comparison.evolutionPercentage! > 50
+                      ? AppTheme.successColor.withOpacity(0.3)
+                      : comparison.evolutionPercentage! > 25
+                          ? AppTheme.warningColor.withOpacity(0.3)
+                          : AppTheme.primaryColor.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: comparison.evolutionPercentage! > 50
+                          ? AppTheme.successColor.withOpacity(0.2)
+                          : comparison.evolutionPercentage! > 25
+                              ? AppTheme.warningColor.withOpacity(0.2)
+                              : AppTheme.primaryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.trending_up_rounded,
+                      color: comparison.evolutionPercentage! > 50
+                          ? AppTheme.successColor
+                          : comparison.evolutionPercentage! > 25
+                              ? AppTheme.warningColor
+                              : AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'A obra evoluiu ${comparison.evolutionPercentage!.toStringAsFixed(1)}% desde a imagem base!',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: comparison.evolutionPercentage! > 50
+                            ? AppTheme.successColor
+                            : comparison.evolutionPercentage! > 25
+                                ? AppTheme.warningColor
+                                : AppTheme.primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Base',
+                        style: TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          color: AppTheme.primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Etapa: ${comparison.etapaObra}',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${comparison.evolutionPercentage?.toStringAsFixed(1)}%',
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Mensagem destacada sobre a evolução
-            if (comparison.evolutionPercentage != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: comparison.evolutionPercentage! > 50
-                      ? Colors.green.withOpacity(0.1)
-                      : comparison.evolutionPercentage! > 25
-                          ? Colors.orange.withOpacity(0.1)
-                          : Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: comparison.evolutionPercentage! > 50
-                        ? Colors.green
-                        : comparison.evolutionPercentage! > 25
-                            ? Colors.orange
-                            : Colors.blue,
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.trending_up,
-                      color: comparison.evolutionPercentage! > 50
-                          ? Colors.green
-                          : comparison.evolutionPercentage! > 25
-                              ? Colors.orange
-                              : Colors.blue,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'A obra evoluiu ${comparison.evolutionPercentage!.toStringAsFixed(1)}% desde a imagem base!',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: comparison.evolutionPercentage! > 50
-                              ? Colors.green.shade700
-                              : comparison.evolutionPercentage! > 25
-                                  ? Colors.orange.shade700
-                                  : Colors.blue.shade700,
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: SafeImage(
+                          imageUrl: comparison.baseImageUrl,
+                          width: double.infinity,
+                          height: 150,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Base',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Comparada',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryColor,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: SafeImage(
+                          imageUrl: comparison.comparedImageUrl,
                           width: double.infinity,
                           height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                          ),
-                          child: SafeImage(
-                            imageUrl: comparison.baseImageUrl,
-                            width: double.infinity,
-                            height: 150,
-                            fit: BoxFit.contain,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Nova',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: double.infinity,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                          ),
-                          child: SafeImage(
-                            imageUrl: comparison.comparedImageUrl,
-                            width: double.infinity,
-                            height: 150,
-                            fit: BoxFit.contain,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              DateFormat('dd/MM/yyyy HH:mm').format(comparison.timestamp),
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

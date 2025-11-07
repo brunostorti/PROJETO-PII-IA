@@ -93,8 +93,8 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
         elevation: 0,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
+        decoration: const BoxDecoration(
+          gradient: AppTheme.subtleBackgroundGradient,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -114,25 +114,25 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
 
   Widget _buildFormCard() {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 500),
+      constraints: const BoxConstraints(maxWidth: 520),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppTheme.cardShadow,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: AppTheme.elevatedShadow,
       ),
       child: Padding(
-        padding: EdgeInsets.all(MediaQuery.of(context).size.width < 400 ? 20 : 32),
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width < 400 ? 24 : 36),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
               _buildImagePreview(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               _buildFormFields(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
               _buildActionButtons(),
             ],
           ),
@@ -148,20 +148,24 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
         Row(
           children: [
             Container(
-              width: 50,
-              height: 50,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
+                gradient: AppTheme.organicGradient,
                 shape: BoxShape.circle,
                 boxShadow: AppTheme.floatingShadow,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.4),
+                  width: 4,
+                ),
               ),
               child: const Icon(
-                Icons.construction,
-                size: 24,
+                Icons.construction_rounded,
+                size: 32,
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,15 +173,28 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
                   Text(
                     'Registro de Obra',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimaryColor,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Preencha os detalhes da obra',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondaryColor,
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'Preencha os detalhes da obra',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -191,30 +208,69 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
 
   Widget _buildImagePreview() {
     return Container(
-      height: 200,
+      height: 220,
       width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.surfaceColor,
+            Colors.white.withOpacity(0.5),
+          ],
+        ),
         border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.3),
+          color: AppTheme.primaryColor.withOpacity(0.2),
           width: 2,
         ),
+        boxShadow: AppTheme.subtleShadow,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         child: kIsWeb
             ? (widget.imageBytes != null
                 ? Image.memory(
                     widget.imageBytes!,
                     fit: BoxFit.cover,
                   )
-                : const SizedBox())
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor.withOpacity(0.05),
+                          AppTheme.secondaryColor.withOpacity(0.03),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 64,
+                        color: AppTheme.textLightColor,
+                      ),
+                    ),
+                  ))
             : (widget.imageFile != null
                 ? Image.file(
                     widget.imageFile!,
                     fit: BoxFit.cover,
                   )
-                : const SizedBox()),
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor.withOpacity(0.05),
+                          AppTheme.secondaryColor.withOpacity(0.03),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 64,
+                        color: AppTheme.textLightColor,
+                      ),
+                    ),
+                  )),
       ),
     );
   }
@@ -365,33 +421,51 @@ class _RegistroObraFormScreenState extends State<RegistroObraFormScreen>
   Widget _buildActionButtons() {
     return Column(
       children: [
-        SizedBox(
+        Container(
           width: double.infinity,
-          height: 50,
+          height: 56,
+              decoration: BoxDecoration(
+                gradient: AppTheme.organicGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: AppTheme.floatingShadow,
+              ),
           child: ElevatedButton(
             onPressed: _isLoading ? null : _handleSave,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
             ),
             child: _isLoading
                 ? const SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 24,
+                    height: 24,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 2.5,
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    'Salvar Registro',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Salvar Registro',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
           ),
         ),

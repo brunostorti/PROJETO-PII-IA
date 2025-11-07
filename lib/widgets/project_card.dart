@@ -49,12 +49,12 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Container(
-            margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.width < 400 ? 16 : 20),
+            margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.width < 400 ? 20 : 28),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              gradient: AppTheme.cardGradient,
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withOpacity(0.9),
                 width: 1.5,
               ),
               boxShadow: AppTheme.cardShadow,
@@ -67,11 +67,23 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
                 onTapUp: (_) => _animationController.reverse(),
                 onTapCancel: () => _animationController.reverse(),
                 borderRadius: BorderRadius.circular(28),
-                child: Padding(
-                  padding: EdgeInsets.all(MediaQuery.of(context).size.width < 400 ? 16 : 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.98),
+                        AppTheme.surfaceColor.withOpacity(0.85),
+                      ],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(MediaQuery.of(context).size.width < 400 ? 20 : 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       // Cabeçalho moderno com nome, status e botão de exclusão
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -109,30 +121,55 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                                  horizontal: 16,
+                                  vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      _getStatusColor(widget.project.status).withOpacity(0.15),
-                                      _getStatusColor(widget.project.status).withOpacity(0.05),
+                                      _getStatusColor(widget.project.status),
+                                      _getStatusColor(widget.project.status).withOpacity(0.8),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: _getStatusColor(widget.project.status).withOpacity(0.3),
-                                    width: 1.5,
-                                  ),
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _getStatusColor(widget.project.status).withOpacity(0.4),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                      spreadRadius: -2,
+                                    ),
+                                  ],
                                 ),
-                                child: Text(
-                                  widget.project.status.displayName,
-                                  style: TextStyle(
-                                    color: _getStatusColor(widget.project.status),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.2,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.white.withOpacity(0.5),
+                                            blurRadius: 4,
+                                            spreadRadius: 1,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      widget.project.status.displayName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               if (widget.onDelete != null) ...[
@@ -153,120 +190,179 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
 
                       const SizedBox(height: 16),
 
-                      // Informações de localização e data
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.location_on_outlined,
-                              size: 18,
-                              color: AppTheme.primaryColor,
-                            ),
+                      // Informações de localização e data com design premium
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryColor.withOpacity(0.08),
+                              AppTheme.secondaryColor.withOpacity(0.05),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              widget.project.location,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.textSecondaryColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withOpacity(0.15),
+                            width: 1,
                           ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.primaryColor.withOpacity(0.15),
+                                        AppTheme.primaryLight.withOpacity(0.1),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(
+                                    Icons.location_on_rounded,
+                                    size: 20,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    widget.project.location,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppTheme.textPrimaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              Icons.calendar_today_outlined,
-                              size: 18,
-                              color: AppTheme.secondaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Início: ${_formatDate(widget.project.startDate)}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textSecondaryColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          if (widget.project.endDate != null) ...[
-                            const SizedBox(width: 16),
-                            Text(
-                              'Fim: ${_formatDate(widget.project.endDate!)}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.textSecondaryColor,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.secondaryColor.withOpacity(0.15),
+                                        AppTheme.secondaryColor.withOpacity(0.08),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 20,
+                                    color: AppTheme.secondaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Início: ${_formatDate(widget.project.startDate)}',
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          color: AppTheme.textPrimaryColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      if (widget.project.endDate != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Fim: ${_formatDate(widget.project.endDate!)}',
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppTheme.textSecondaryColor,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ],
+                        ),
                       ),
 
                       const SizedBox(height: 16),
 
-                      // Galeria de imagens moderna - exibir imagens reais
+                      // Galeria de imagens premium
                       if (widget.project.imageUrls.isNotEmpty)
                         Container(
-                          height: 120,
+                          height: 140,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: AppTheme.surfaceColor,
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.surfaceColor,
+                                Colors.white.withOpacity(0.5),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              width: 1,
+                            ),
                           ),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(14),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.image_outlined,
-                                    color: AppTheme.textSecondaryColor,
-                                    size: 18,
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.photo_library_rounded,
+                                      color: AppTheme.primaryColor,
+                                      size: 18,
+                                    ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 8),
                                   Text(
                                     '${widget.project.imageUrls.length} imagem(ns)',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: AppTheme.textSecondaryColor,
-                                      fontWeight: FontWeight.w600,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppTheme.textPrimaryColor,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               Expanded(
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: widget.project.imageUrls.length > 3 ? 3 : widget.project.imageUrls.length,
                                   itemBuilder: (context, index) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 8.0),
+                                    return Container(
+                                      margin: const EdgeInsets.only(right: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: AppTheme.subtleShadow,
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.8),
+                                          width: 2,
+                                        ),
+                                      ),
                                       child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(14),
                                         child: SafeImage(
                                           imageUrl: widget.project.imageUrls[index],
-                                          width: 80,
-                                          height: 80,
+                                          width: 90,
+                                          height: 90,
                                           fit: BoxFit.cover,
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(14),
                                         ),
                                       ),
                                     );
@@ -279,31 +375,46 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
 
                       const SizedBox(height: 12),
 
-                      // Data de atualização com estilo moderno
+                      // Data de atualização com estilo premium
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          horizontal: 14,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.surfaceColor,
-                          borderRadius: BorderRadius.circular(12),
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.surfaceColor.withOpacity(0.6),
+                              Colors.white.withOpacity(0.4),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppTheme.textLightColor.withOpacity(0.2),
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.access_time_outlined,
-                              size: 14,
-                              color: AppTheme.textLightColor,
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.textLightColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.access_time_rounded,
+                                size: 14,
+                                color: AppTheme.textLightColor,
+                              ),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 8),
                             Text(
                               'Atualizado ${_formatDateTime(widget.project.updatedAt)}',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppTheme.textLightColor,
-                                fontWeight: FontWeight.w400,
-                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -315,6 +426,7 @@ class _ProjectCardState extends State<ProjectCard> with TickerProviderStateMixin
               ),
             ),
           ),
+        ),
         );
       },
     );

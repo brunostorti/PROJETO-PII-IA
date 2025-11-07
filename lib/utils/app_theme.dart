@@ -2,30 +2,76 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Nova paleta moderna baseada em #001489
-  static const Color primaryColor = Color(0xFF001489); // Azul escuro moderno
+  // Paleta azul original elegante e sofisticada
+  static const Color primaryColor = Color(0xFF001489); // Azul escuro original
   static const Color primaryLight = Color(0xFF3D5CFF); // Azul mais claro
   static const Color primaryDark = Color(0xFF000761); // Azul ainda mais escuro
-
-  // Cores secundárias modernas
+  
+  // Cores secundárias harmoniosas
   static const Color secondaryColor = Color(0xFF00D4AA); // Verde menta moderno
   static const Color accentColor = Color(0xFFFF6B9D); // Rosa moderno
+  static const Color vibrantPink = Color(0xFFFF6B9D); // Rosa moderno
+  static const Color vibrantBlue = Color(0xFF3D5CFF); // Azul vibrante
+  static const Color vibrantPurple = Color(0xFF6C5CE7); // Roxo elegante
+  static const Color vibrantOrange = Color(0xFFFFA502); // Laranja vibrante
 
-  // Gradientes modernos
+  // Gradientes elegantes com azul original
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryColor, primaryLight],
+    colors: [Color(0xFF001489), Color(0xFF3D5CFF), Color(0xFF5B7FFF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  // Gradiente sutil e elegante para fundos
+  static const LinearGradient subtleBackgroundGradient = LinearGradient(
+    colors: [Color(0xFFF8FAFF), Color(0xFFE3F2FD), Color(0xFFF0F7FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  // Gradiente elegante para elementos de destaque
+  static const LinearGradient accentGradient = LinearGradient(
+    colors: [Color(0xFF001489), Color(0xFF3D5CFF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient surfaceGradient = LinearGradient(
-    colors: [Color(0xFFF8FAFF), Color(0xFFE3F2FD)],
+    colors: [Color(0xFFFAFBFC), Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [Color(0xFF10B981), Color(0xFF34D399)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  // Cores de fundo modernas
-  static const Color backgroundColor = Color(0xFFFAFBFF); // Fundo com tom azulado
+  static const LinearGradient cardGradient = LinearGradient(
+    colors: [Colors.white, Color(0xFFFAFBFC)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente orgânico elegante para botões e ícones
+  static const LinearGradient organicGradient = LinearGradient(
+    colors: [Color(0xFF001489), Color(0xFF3D5CFF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient blueGradient = LinearGradient(
+    colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Cores de fundo elegantes
+  static const Color backgroundColor = Color(0xFFFAFBFF); // Fundo com tom azulado sutil
   static const Color surfaceColor = Color(0xFFF8FAFF); // Superfície glassmorphism
   static const Color cardColor = Colors.white;
 
@@ -43,16 +89,22 @@ class AppTheme {
   static List<BoxShadow> get cardShadow {
     return [
       BoxShadow(
-        color: Colors.black.withOpacity(0.08),
+        color: Colors.black.withOpacity(0.06),
         blurRadius: 24,
         offset: const Offset(0, 8),
         spreadRadius: -4,
       ),
       BoxShadow(
-        color: primaryColor.withOpacity(0.04),
+        color: primaryColor.withOpacity(0.08),
         blurRadius: 16,
         offset: const Offset(0, 4),
         spreadRadius: -2,
+      ),
+      BoxShadow(
+        color: Colors.white.withOpacity(0.5),
+        blurRadius: 1,
+        offset: const Offset(0, -1),
+        spreadRadius: 0,
       ),
     ];
   }
@@ -60,10 +112,44 @@ class AppTheme {
   static List<BoxShadow> get floatingShadow {
     return [
       BoxShadow(
-        color: primaryColor.withOpacity(0.25),
-        blurRadius: 20,
+        color: primaryColor.withOpacity(0.3),
+        blurRadius: 24,
+        offset: const Offset(0, 12),
+        spreadRadius: -6,
+      ),
+      BoxShadow(
+        color: primaryLight.withOpacity(0.2),
+        blurRadius: 16,
+        offset: const Offset(0, 8),
+        spreadRadius: -4,
+      ),
+    ];
+  }
+
+  static List<BoxShadow> get elevatedShadow {
+    return [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.08),
+        blurRadius: 40,
+        offset: const Offset(0, 15),
+        spreadRadius: -8,
+      ),
+      BoxShadow(
+        color: primaryColor.withOpacity(0.12),
+        blurRadius: 30,
         offset: const Offset(0, 10),
         spreadRadius: -5,
+      ),
+    ];
+  }
+
+  static List<BoxShadow> get subtleShadow {
+    return [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.04),
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+        spreadRadius: -2,
       ),
     ];
   }
@@ -261,7 +347,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
 
-      // Transições de página suaves
+      // Transições de página suaves e elegantes
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -271,6 +357,10 @@ class AppTheme {
           TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
         },
       ),
+      
+      // Ripple effect mais suave
+      splashColor: primaryColor.withOpacity(0.1),
+      highlightColor: primaryColor.withOpacity(0.05),
     );
   }
 

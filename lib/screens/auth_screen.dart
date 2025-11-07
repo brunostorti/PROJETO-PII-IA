@@ -70,8 +70,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
+        decoration: const BoxDecoration(
+          gradient: AppTheme.subtleBackgroundGradient,
         ),
         child: SafeArea(
           child: Center(
@@ -93,16 +93,16 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   Widget _buildAuthCard() {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 400),
+      constraints: const BoxConstraints(maxWidth: 420),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppTheme.cardShadow,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: AppTheme.elevatedShadow,
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: MediaQuery.of(context).size.width < 400 ? 20 : 32,
-          vertical: MediaQuery.of(context).size.height < 800 ? 24 : 32,
+          horizontal: MediaQuery.of(context).size.width < 400 ? 24 : 36,
+          vertical: MediaQuery.of(context).size.height < 800 ? 28 : 40,
         ),
         child: Form(
           key: _formKey,
@@ -110,11 +110,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildHeader(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
               _buildForm(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               _buildActionButtons(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildModeToggle(),
             ],
           ),
@@ -127,32 +127,61 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     return Column(
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 96,
+          height: 96,
           decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
+            gradient: AppTheme.organicGradient,
             shape: BoxShape.circle,
             boxShadow: AppTheme.floatingShadow,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.4),
+              width: 4,
+            ),
           ),
           child: const Icon(
             Icons.construction,
-            size: 40,
+            size: 48,
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          AppConstants.appName,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimaryColor,
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.08),
+                AppTheme.secondaryColor.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            AppConstants.appName,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimaryColor,
+              letterSpacing: -0.8,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          _isLoginMode ? 'Entre na sua conta' : 'Crie sua conta',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: AppTheme.textSecondaryColor,
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            _isLoginMode ? 'Entre na sua conta' : 'Crie sua conta',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.textSecondaryColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
@@ -267,55 +296,94 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       builder: (context, authProvider, child) {
         return Column(
           children: [
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 50,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: AppTheme.organicGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: AppTheme.floatingShadow,
+              ),
               child: ElevatedButton(
                 onPressed: authProvider.isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                 ),
                 child: authProvider.isLoading
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: 24,
+                        height: 24,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                          strokeWidth: 2.5,
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : Text(
-                        _isLoginMode ? 'Entrar' : 'Criar Conta',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _isLoginMode ? 'Entrar' : 'Criar Conta',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ],
                       ),
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 50,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                  width: 2,
+                ),
+                boxShadow: AppTheme.subtleShadow,
+              ),
               child: OutlinedButton(
                 onPressed: authProvider.isLoading ? null : _handleAnonymousLogin,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.primaryColor),
+                  side: BorderSide.none,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                 ),
-                child: const Text(
-                  'Continuar Anonimamente',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person_outline_rounded,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Continuar Anonimamente',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -450,3 +518,4 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     }
   }
 }
+

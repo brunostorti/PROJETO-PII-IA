@@ -145,14 +145,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }
 
-              if (projectProvider.projects.isEmpty) {
-                return EmptyState(
-                  icon: Icons.construction,
-                  title: AppConstants.noProjectsMessage,
-                  message: AppConstants.addProjectMessage,
-                );
-              }
-
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final hPad = constraints.maxWidth < 420 ? 12.0 : 16.0;
@@ -164,29 +156,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: ListView.builder(
-                          padding: EdgeInsets.all(hPad),
-                          itemCount: projectProvider.projects.length,
-                          itemBuilder: (context, index) {
-                            final project = projectProvider.projects[index];
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: hPad),
-                              child: ProjectCard(
-                                project: project,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => ProjectDetailScreen(
-                                        project: project,
-                                      ),
-                                    ),
+                        child: projectProvider.projects.isEmpty
+                            ? Center(
+                                child: EmptyState(
+                                  icon: Icons.construction,
+                                  title: AppConstants.noProjectsMessage,
+                                  message: AppConstants.addProjectMessage,
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: EdgeInsets.all(hPad),
+                                itemCount: projectProvider.projects.length,
+                                itemBuilder: (context, index) {
+                                  final project = projectProvider.projects[index];
+                                  return TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: 0.0, end: 1.0),
+                                    duration: Duration(milliseconds: 300 + (index * 100)),
+                                    curve: Curves.easeOutCubic,
+                                    builder: (context, value, child) {
+                                      return Opacity(
+                                        opacity: value,
+                                        child: Transform.translate(
+                                          offset: Offset(0, 20 * (1 - value)),
+                                          child: Padding(
+                                            padding: EdgeInsets.only(bottom: hPad),
+                                            child: ProjectCard(
+                                              project: project,
+                                              onTap: () {
+                                                Navigator.of(context).push(
+                                                  PageRouteBuilder(
+                                                    pageBuilder: (context, animation, secondaryAnimation) =>
+                                                        ProjectDetailScreen(project: project),
+                                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                                      const begin = Offset(1.0, 0.0);
+                                                      const end = Offset.zero;
+                                                      const curve = Curves.easeInOutCubic;
+                                                      var tween = Tween(begin: begin, end: end).chain(
+                                                        CurveTween(curve: curve),
+                                                      );
+                                                      return SlideTransition(
+                                                        position: animation.drive(tween),
+                                                        child: FadeTransition(
+                                                          opacity: animation,
+                                                          child: child,
+                                                        ),
+                                                      );
+                                                    },
+                                                    transitionDuration: const Duration(milliseconds: 300),
+                                                  ),
+                                                );
+                                              },
+                                              onDelete: () => _confirmDeleteProject(context, project),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
-                                onDelete: () => _confirmDeleteProject(context, project),
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ],
                   );
@@ -544,11 +572,15 @@ class _DashboardHeader extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: AppTheme.cardGradient,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.8),
+          width: 1.5,
+        ),
         boxShadow: AppTheme.cardShadow,
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isTight = constraints.maxWidth < 360;
@@ -556,8 +588,8 @@ class _DashboardHeader extends StatelessWidget {
           return isTight
               ? Column(
                   children: [
-                    Row(children: [children[0], const SizedBox(width: 8), children[1]]),
-                    const SizedBox(height: 8),
+                    Row(children: [children[0], const SizedBox(width: 10), children[1]]),
+                    const SizedBox(height: 10),
                     Row(children: [children[2]]),
                   ],
                 )
@@ -583,40 +615,74 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: info.color.withOpacity(0.2), width: 1.5),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: info.color.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+            spreadRadius: -3,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: info.color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  info.color.withOpacity(0.2),
+                  info.color.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: info.color.withOpacity(0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: Icon(info.icon, color: info.color, size: 18),
+            child: Icon(info.icon, color: info.color, size: 20),
           ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                info.value,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: info.color),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                info.label,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  info.value,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: info.color,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  info.label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 }
+
